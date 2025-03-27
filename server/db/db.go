@@ -2,10 +2,13 @@ package db
 
 import (
 	"database/sql"
+	"sync"
 )
 
 type DBManager struct {
 	DB *sql.DB
+	WG *sync.WaitGroup
+	MU *sync.RWMutex
 }
 
 func NewDBManager(driver string, connStr string) (*DBManager, error) {
@@ -17,7 +20,9 @@ func NewDBManager(driver string, connStr string) (*DBManager, error) {
 	if err != nil {
 		return nil, err
 	}
-	return &DBManager{DB: db}, nil
+	wg := &sync.WaitGroup{}
+	mu := &sync.RWMutex{}
+	return &DBManager{DB: db, WG: wg, MU: mu}, nil
 }
 
 func (d *DBManager) Close() {

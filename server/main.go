@@ -5,9 +5,9 @@ import (
 	// "gaspr/cookies"
 	"gaspr/db"
 	"gaspr/external_requests"
+	"html/template"
 	"log"
 	"net/http"
-	"html/template"
 
 	"github.com/gorilla/mux"
 	_ "github.com/lib/pq"
@@ -18,6 +18,7 @@ func main() {
 	if err != nil {
 		log.Fatalf("Ошибка подключения к базе данных: %v", err)
 	}
+	defer db.Close()
 	resp, _ := db.DB.Query("SELECT * FROM users")
 	fmt.Println(resp)
 
@@ -31,6 +32,12 @@ func main() {
 	r.HandleFunc("/get_resume", func(w http.ResponseWriter, r *http.Request) {
 		externalrequests.GetResume(w, r, db)
 	}).Methods(http.MethodPost)
+
+	r.HandleFunc("/nlp", func(w http.ResponseWriter, r *http.Request){
+		log.Println("OK")
+		w.WriteHeader(http.StatusOK)
+		w.Write([]byte("вСЕ ДОШЛО"))
+	})
 
 	server := &http.Server{
 		Addr:    ":8080",

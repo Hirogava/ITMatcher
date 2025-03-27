@@ -1,0 +1,10 @@
+{
+    "hr_username": "example_user",
+    "vacancy": "Software Engineer",
+    "first_name": "John",
+    "last_name": "Doe",
+    "surname": "Smith",
+    "email": "john.doe@example.com",
+    "phone": "+1234567890",
+    "portfolio": true
+}
