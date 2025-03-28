@@ -5,10 +5,12 @@ import (
 	"encoding/json"
 	"fmt"
 	"gaspr/db"
+	"gaspr/nlp"
 	"io"
 	"log"
 	"mime/multipart"
 	"net/http"
+	"net/http/httptest"
 	"os"
 	"path/filepath"
 	"strconv"
@@ -123,6 +125,11 @@ func GetResume(w http.ResponseWriter, r *http.Request, db *db.DBManager){
 						return
 					}
 
+					if fileHeader.Header.Get("Content-Type") == "application/json" {
+						log.Println("JSON файл, пропускаем сохранение")
+						continue
+					}
+
 					dstPath := filepath.Join(dir, fileHeader.Filename)
 					dst, err := os.Create(dstPath)
 					if err != nil {
@@ -147,18 +154,17 @@ func GetResume(w http.ResponseWriter, r *http.Request, db *db.DBManager){
 	}
 	db.WG.Wait()
 
-	if err := sendFilesAndMetadata(files, resume, "http://localhost:8080/nlp"); err != nil {
+	if err := sendFilesAndMetadata(files, resume, "/nlp", db); err != nil {
 		log.Printf("Ошибка отправки файлов в NLP API: %v", err)
 		http.Error(w, "Ошибка отправки данных", http.StatusInternalServerError)
 		return
 	}
 }
 
-func sendFilesAndMetadata(files []string, metadata ResumeData, apiURL string) error {
+func sendFilesAndMetadata(files []string, metadata ResumeData, apiURL string, db *db.DBManager) error {
 	body := &bytes.Buffer{}
 	writer := multipart.NewWriter(body)
 
-	// Добавляем JSON с метаинформацией
 	jsonData, err := json.Marshal(metadata)
 	if err != nil {
 		return fmt.Errorf("ошибка сериализации JSON: %v", err)
@@ -190,14 +196,19 @@ func sendFilesAndMetadata(files []string, metadata ResumeData, apiURL string) er
 
 	writer.Close()
 
-	resp, err := http.Post(apiURL, writer.FormDataContentType(), body)
-	if err != nil {
-		return fmt.Errorf("ошибка отправки данных: %v", err)
-	}
-	defer resp.Body.Close()
+	req, err := http.NewRequest("POST", "/nlp", body)
+    if err != nil {
+        log.Printf("Ошибка создания запроса к /nlp: %v", err)
+		return err
+    }
+    req.Header.Set("Content-Type", writer.FormDataContentType())
 
-	if resp.StatusCode != http.StatusOK {
-		return fmt.Errorf("ошибка при отправке данных в API: %s", resp.Status)
-	}
+	recorder := httptest.NewRecorder()
+    nlp.SaveFiles(recorder, req, db)
+
+    if recorder.Code != http.StatusOK {
+        log.Printf("Ошибка при вызове /nlp: %s", recorder.Body.String())
+        return err
+    }
 	return nil
 }

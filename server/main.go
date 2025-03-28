@@ -3,6 +3,7 @@ package main
 import (
 	// "gaspr/cookies"
 	"gaspr/db"
+	"gaspr/nlp"
 	"gaspr/external_requests"
 	"html/template"
 	"log"
@@ -36,17 +37,16 @@ func main() {
 	}).Methods(http.MethodPost)
 
 	r.HandleFunc("/nlp", func(w http.ResponseWriter, r *http.Request){
-		log.Println("OK")
-		w.WriteHeader(http.StatusOK)
-		w.Write([]byte("вСЕ ДОШЛО"))
-	})
+		nlp.SaveFiles(w, r, dB)
+	}).Methods(http.MethodPost)
 
 	server := &http.Server{
 		Addr:    ":8080",
 		Handler: r,
 	}
 
-	if err := server.ListenAndServe(); err != nil {
-		log.Fatal(err)
-	}
+	log.Println("Сервер запущен на порту 8080")
+    if err := server.ListenAndServe(); err != nil {
+        log.Fatal(err)
+    }
 }
