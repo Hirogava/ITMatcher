@@ -94,7 +94,7 @@ func GetResume(w http.ResponseWriter, r *http.Request, db *db.DBManager){
 		resume.VacancyId = vacId
 
 		var resumeId int
-		query = "INSERT INTO resumes (finder_id, first_name, last_name, surname, email, phone, vacancy_id) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id"
+		query = "INSERT INTO resumes (finder_id, first_name, last_name, surname, email, phone_number, vacancy_id) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id"
 		err = db.DB.QueryRow(query, idFinder, finderData.FirstName, finderData.LastName, finderData.Surname, finderData.Email, finderData.Phone, vacId).Scan(&resumeId)
 		if err != nil {
 			log.Printf("Ошибка при записи в базу данных: %v", err)
@@ -147,7 +147,7 @@ func GetResume(w http.ResponseWriter, r *http.Request, db *db.DBManager){
 	}
 	db.WG.Wait()
 
-	if err := sendFilesAndMetadata(files, resume, "/nlp"); err != nil {
+	if err := sendFilesAndMetadata(files, resume, "http://localhost:8080/nlp"); err != nil {
 		log.Printf("Ошибка отправки файлов в NLP API: %v", err)
 		http.Error(w, "Ошибка отправки данных", http.StatusInternalServerError)
 		return
