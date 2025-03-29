@@ -2,6 +2,7 @@ package db
 
 import (
 	"database/sql"
+	"fmt"
 	"sync"
 
 	"golang.org/x/crypto/bcrypt"
@@ -46,6 +47,16 @@ func (d *DBManager) CheckHr(email, password string) error{
 	}
 	
 	return nil
- 
-	
+}
+
+func (db *DBManager) RegisterHr(email, password string) error{
+	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
+	if err != nil{
+		return fmt.Errorf("ошибка генерации хеша: %w", err)
+	}
+	_, err = db.DB.Exec("INSERT INTO hr (email, hash_password) VALUES ($1, $2)", email, hashedPassword)
+	if err != nil{
+    	return err
+	}
+	return nil
 }

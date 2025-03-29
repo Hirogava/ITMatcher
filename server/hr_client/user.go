@@ -1,10 +1,7 @@
 package hrclient
 
 import (
-	"fmt"
 	"gaspr/db"
-
-	"golang.org/x/crypto/bcrypt"
 )
 
 func Login(email string, password string, db *db.DBManager) error {
@@ -21,10 +18,12 @@ func Logout(username string) string {
 	return ""
 }
 
-func Register(username string, password string, email string) error {
-	hash_password, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
+func Register(password string, email string, db *db.DBManager) error {
+	
+	err := db.RegisterHr(email, password)
 	if err != nil {
-		return fmt.Errorf("Ошибка генерации хеша: %w", err)
+		return err
 	}
+
 	return nil
 }
