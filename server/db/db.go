@@ -3,6 +3,8 @@ package db
 import (
 	"database/sql"
 	"sync"
+
+	"golang.org/x/crypto/bcrypt"
 )
 
 type DBManager struct {
@@ -28,4 +30,22 @@ func NewDBManager(driver string, connStr string) (*DBManager, error) {
 func (d *DBManager) Close() {
 	d.DB.Close()
 	d.DB = nil
+}
+
+func (d *DBManager) CheckHr(email, password string) error{
+	query := `SELECT hash_password FROM hr WHERE email=$1`
+	var hash string
+	err := d.DB.QueryRow(query, email).Scan(&hash)
+	if err != nil{
+		return err
+	}
+	
+	err = bcrypt.CompareHashAndPassword([]byte(hash), []byte(password))
+	if err != nil{
+		return err
+	}
+	
+	return nil
+ 
+	
 }
