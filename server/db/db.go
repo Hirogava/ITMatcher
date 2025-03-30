@@ -33,30 +33,33 @@ func (d *DBManager) Close() {
 	d.DB = nil
 }
 
-func (d *DBManager) CheckHr(email, password string) error{
-	query := `SELECT hash_password FROM hr WHERE email=$1`
-	var hash string
-	err := d.DB.QueryRow(query, email).Scan(&hash)
+func (d *DBManager) CheckHr(email, password string) (int, string, error){
+	query := `SELECT hash_password, username, id FROM hr WHERE email=$1`
+	var hash, user string
+	var id int
+	err := d.DB.QueryRow(query, email).Scan(&hash, &user, &id)
 	if err != nil{
-		return err
+		return 0, "", err
 	}
 	
 	err = bcrypt.CompareHashAndPassword([]byte(hash), []byte(password))
 	if err != nil{
-		return err
+		return 0, "", err
 	}
 	
-	return nil
+	return id, user, nil
 }
 
-func (db *DBManager) RegisterHr(email, password string) error{
+func (db *DBManager) RegisterHr(email, password string) (int, string, error){
 	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
 	if err != nil{
-		return fmt.Errorf("ошибка генерации хеша: %w", err)
+		return 0, "",fmt.Errorf("ошибка генерации хеша: %w", err)
 	}
-	_, err = db.DB.Exec("INSERT INTO hr (email, hash_password) VALUES ($1, $2)", email, hashedPassword)
+	var id int
+	var username string
+	err = db.DB.QueryRow("INSERT INTO hr (email, hash_password) VALUES ($1, $2) RETURNING id, username", email, hashedPassword).Scan(&id, &username)
 	if err != nil{
-    	return err
+    	return 0, "", err
 	}
-	return nil
+	return id, username, nil
 }

@@ -1,7 +1,7 @@
 package main
 
 import (
-	// "gaspr/cookies"
+	"gaspr/cookies"
 	"gaspr/db"
 	"gaspr/nlp"
 	"gaspr/external_requests"
@@ -26,6 +26,8 @@ func main() {
 	log.Println("Миграция базы данных завершена успешно")
 
 	r := mux.NewRouter()
+
+	_ = cookies.NewCookieManager()
 
 	r.HandleFunc("/test", func(w http.ResponseWriter, r *http.Request) {
 		tmpl := template.Must(template.ParseFiles("./test.html"))

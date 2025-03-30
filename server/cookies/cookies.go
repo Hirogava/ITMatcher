@@ -8,14 +8,15 @@ import (
 )
 
 type CookieManager struct {
-	Store *sessions.CookieStore
+	Session *sessions.Session
 }
 
 func NewCookieManager() *CookieManager {
 	key := generateSecretKey()
 	store := sessions.NewCookieStore([]byte(key))
+	session, _ := store.Get(nil, "session-name")
 	return &CookieManager{
-		Store: store,
+		Session: session,
 	}
 }
 
