@@ -46,7 +46,7 @@ func SaveFiles(w http.ResponseWriter, r *http.Request, db *db.DBManager){
 		return
 	}
 
-	dir := "nlpData/" + strconv.Itoa(resume.ResumeId)
+	dir := "aiData/" + strconv.Itoa(resume.ResumeId)
 	os.MkdirAll(dir, os.ModePerm)
 
 	for _, fileHeaders := range r.MultipartForm.File {
@@ -72,6 +72,10 @@ func SaveFiles(w http.ResponseWriter, r *http.Request, db *db.DBManager){
 				return
 			}
 			log.Println("Файл успешно загружен")
+
+			// Чтение содержимого файла и вывод его содержимого
+			// text, err := os.ReadFile(dstPath)
+			// fmt.Println(string(text))
 
 			file.Close()
 			dst.Close()

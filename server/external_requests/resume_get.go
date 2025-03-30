@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"gaspr/db"
-	"gaspr/nlp"
+	"gaspr/ai"
 	"io"
 	"log"
 	"mime/multipart"

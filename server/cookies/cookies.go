@@ -12,12 +12,18 @@ type CookieManager struct {
 	Session *sessions.Session
 }
 
-func NewCookieManager(r *http.Request) *CookieManager {
+var store *sessions.CookieStore 
+
+func init() {
 	key := generateSecretKey()
-	store := sessions.NewCookieStore([]byte(key))
+	store = sessions.NewCookieStore([]byte(key))
 	store.Options.HttpOnly = true
 	store.Options.Secure = true
 	store.Options.SameSite = http.SameSiteStrictMode
+
+}
+
+func NewCookieManager(r *http.Request) *CookieManager {
 	session, _ := store.Get(r, "session-name")
 	return &CookieManager{
 		Session: session,
