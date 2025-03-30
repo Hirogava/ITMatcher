@@ -1,11 +1,12 @@
 package hrclient
 
 import (
-	"gaspr/db"
 	"gaspr/cookies"
+	"gaspr/db"
+	"net/http"
 )
 
-func Login(email string, password string, db *db.DBManager, store *cookies.CookieManager) error {
+func Login(email string, password string, db *db.DBManager, store *cookies.CookieManager, w http.ResponseWriter, r *http.Request) error {
 
 	id, username, err := db.CheckHr(email, password)
 	if err != nil {
@@ -15,17 +16,17 @@ func Login(email string, password string, db *db.DBManager, store *cookies.Cooki
 	store.Session.Values["username"] = username
 	store.Session.Values["user_id"] = id
 
-	return nil
+	return store.Session.Save(r, w)
 }
 
-func Logout(username string, store *cookies.CookieManager) error {
+func Logout(username string, store *cookies.CookieManager, w http.ResponseWriter, r *http.Request) error {
 	store.Session.Values["username"] = ""
 	store.Session.Values["user_id"] = ""
 
-	return nil
+	return store.Session.Save(r, w)
 }
 
-func Register(password string, email string, db *db.DBManager,  store *cookies.CookieManager) error {
+func Register(password string, email string, db *db.DBManager,  store *cookies.CookieManager, w http.ResponseWriter, r *http.Request) error {
 	
 	id, username, err := db.RegisterHr(email, password)
 	if err != nil {
@@ -35,5 +36,5 @@ func Register(password string, email string, db *db.DBManager,  store *cookies.C
 	store.Session.Values["username"] = username
 	store.Session.Values["user_id"] = id
 
-	return nil
+	return store.Session.Save(r, w)
 }

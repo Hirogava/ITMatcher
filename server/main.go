@@ -27,7 +27,8 @@ func main() {
 
 	r := mux.NewRouter()
 
-	_ = cookies.NewCookieManager()
+	var rr *http.Request
+	_ = cookies.NewCookieManager(rr)
 
 	r.HandleFunc("/test", func(w http.ResponseWriter, r *http.Request) {
 		tmpl := template.Must(template.ParseFiles("./test.html"))
