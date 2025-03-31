@@ -6,8 +6,13 @@ client = OpenAI(
     api_key="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",
 )
 
+def sanitize_text(text):
+    """Remove invalid Unicode surrogates."""
+    return text.encode('utf-16', 'surrogatepass').decode('utf-16', 'ignore')
+
 try:
     resume = sys.stdin.read()
+    resume = sanitize_text(resume)
 
     completion = client.chat.completions.create(
     extra_body={},

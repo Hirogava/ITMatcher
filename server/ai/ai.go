@@ -90,6 +90,7 @@ func SaveFiles(w http.ResponseWriter, r *http.Request, db *db.DBManager){
 func aiRequest (resume string) (string, error) {
 	cmd := exec.Command("python", "ai\\main.py")
     cmd.Stdin = bytes.NewBufferString(resume)
+	cmd.Env = append(os.Environ(), "PYTHONIOENCODING=utf-8")
 
     output, err := cmd.CombinedOutput()
     if err != nil {
