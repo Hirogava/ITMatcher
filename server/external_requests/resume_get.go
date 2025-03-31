@@ -169,7 +169,7 @@ func sendFilesAndMetadata(files []string, metadata ResumeData, apiURL string, db
 	if err != nil {
 		return fmt.Errorf("ошибка сериализации JSON: %v", err)
 	}
-	part, err := writer.CreateFormFile("resume_data", "resume_data.json")
+	part, err := writer.CreateFormField("resume_data")
 	if err != nil {
 		return fmt.Errorf("ошибка при создании JSON-part: %v", err)
 	}

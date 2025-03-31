@@ -1,12 +1,15 @@
 package nlp
 
 import (
+	"bytes"
 	"encoding/json"
+	"fmt"
 	"gaspr/db"
 	"io"
 	"log"
 	"net/http"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"strconv"
 )
@@ -30,19 +33,17 @@ func SaveFiles(w http.ResponseWriter, r *http.Request, db *db.DBManager){
 		return
 	}
 
-	jsonFile, _, err := r.FormFile("resume_data")
-	if err != nil {
-		log.Printf("Ошибка при получении JSON-файла: %v", err)
-		http.Error(w, "Ошибка при открытии json файла", http.StatusBadRequest)
+	jsonStr := r.FormValue("resume_data")
+	if jsonStr == "" {
+		log.Println("Ошибка: JSON не передан")
+		http.Error(w, "Отсутствует JSON-данные", http.StatusBadRequest)
 		return
 	}
-	defer jsonFile.Close()
 
 	var resume ResumeData
-	err = json.NewDecoder(jsonFile).Decode(&resume)
-	if err != nil {
+	if err := json.Unmarshal([]byte(jsonStr), &resume); err != nil {
 		log.Printf("Ошибка при декодировании JSON: %v", err)
-		http.Error(w, "Ошибка при получении файла", http.StatusBadRequest)
+		http.Error(w, "Ошибка при обработке JSON", http.StatusBadRequest)
 		return
 	}
 
@@ -66,21 +67,34 @@ func SaveFiles(w http.ResponseWriter, r *http.Request, db *db.DBManager){
 				return
 			}
 
-			if _, err := io.Copy(dst, file); err != nil {
-				log.Printf("Ошибка при копировании файла: %v", err)
-				http.Error(w, "Ошибка при копировании файла", http.StatusBadRequest)
+			resume, err := io.ReadAll(file)
+			if err != nil {
+				log.Println(err)
 				return
 			}
+
+			resumeData, err := aiRequest(string(resume))
+			if err != nil {
+				log.Println(err)
+				return
+			}
+			dst.WriteString(resumeData)
+
 			log.Println("Файл успешно загружен")
-
-			// Чтение содержимого файла и вывод его содержимого
-			// text, err := os.ReadFile(dstPath)
-			// fmt.Println(string(text))
-
 			file.Close()
 			dst.Close()
 		}
-
-
 	}
+}
+
+func aiRequest (resume string) (string, error) {
+	cmd := exec.Command("python", "ai\\main.py")
+    cmd.Stdin = bytes.NewBufferString(resume)
+
+    output, err := cmd.CombinedOutput()
+    if err != nil {
+        return "", fmt.Errorf("AI request failed: %v, output: %s", err, string(output))
+    }
+
+	return string(output), nil
 }

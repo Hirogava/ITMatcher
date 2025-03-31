@@ -1,26 +1,46 @@
-import os
+import sys
 from openai import OpenAI
 
 client = OpenAI(
-    base_url="https://api.aimlapi.com/v1",
-
-    # Insert your AIML API Key in the quotation marks instead of <YOUR_AIMLAPI_KEY>:
-    api_key="cc816599d10744daa9316879a9b6f88a",  
+    base_url="https://openrouter.ai/api/v1",
+    api_key="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",
 )
 
-with open('resume.txt', 'r', encoding="UTF-8") as f:
-    resume = f.read()
+try:
+    resume = sys.stdin.read()
 
-response = client.chat.completions.create(
-    model="gpt-4o",
+    completion = client.chat.completions.create(
+    extra_body={},
+    model="qwen/qwen2.5-vl-32b-instruct:free",
     messages=[
-        {
-            "role": "user",
-            "content": f"Вытащи навыки из резюме, с разделением на soft скиллы и hard, указывая их в том же порядке, что они были описаны в резюме, выделяя только названия навыков, например: SQL, Python и тд: {resume}"
-        },
-    ],
+      {
+        "role": "user",
+        "content": (
+                      "Проанализируй резюме и выдели из него навыки, разделяя их на две категории: Hard Skills и Soft Skills. "
+                  "Выведи результат в следующем формате:\n\n"
+                  "**Hard Skills:**\n"
+                  "1. [Навык 1]\n"
+                  "2. [Навык 2]\n"
+                  "...\n\n"
+                  "**Soft Skills:**\n"
+                  "1. [Навык 1]\n"
+                  "2. [Навык 2]\n"
+                  "...\n\n"
+                  "Важно:\n"
+                  "- Указывай только конкретные названия навыков.\n"
+                  "- Не группируй навыки в категории или подтемы (например, вместо \"Программирование (Python, SQL)\" выдели \"Python\" и \"SQL\" как отдельные навыки).\n"
+                  "- Сохраняй порядок, в котором навыки упоминаются в резюме.\n"
+                  "- Не добавляй комментарии или пояснения.\n\n"
+                  "- Не добавляй ничего лишнего. Выведи только результат в указанном формате.\n"
+                  "- Не добавляй примечания или пояснения.\n"
+                  "Резюме:\n"
+                  f"{resume}"
+                  )
+      }
+    ]
 )
 
-message = response.choices[0].message.content
-
-print(f"Assistant: {message}")
+    print(completion.choices[0].message.content.encode('utf-8').decode('utf-8'))
+except Exception as e:
+    print(f"Error: {e}", file=sys.stderr)
+    sys.exit(1)
