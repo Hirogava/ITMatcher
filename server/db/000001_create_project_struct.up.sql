@@ -84,6 +84,49 @@ CREATE TABLE "soft_skills" (
   "soft_skill" text
 );
 
+CREATE TABLE "middle_vacancies" (
+  "id" serial PRIMARY KEY,
+  "name" text
+);
+
+CREATE TABLE "middle_hard_skills" (
+  "id" serial PRIMARY KEY,
+  "vacancy_id" integer,
+  "hard_skill_id" integer
+);
+
+CREATE TABLE "middle_soft_skills" (
+  "id" serial PRIMARY KEY,
+  "vacancy_id" integer,
+  "soft_skill_id" integer
+);
+
+CREATE TABLE "users" (
+  "id" serial PRIMARY KEY,
+  "hash_password" text,
+  "email" text
+);
+
+CREATE TABLE "user_resumes" (
+  "id" serial PRIMARY KEY,
+  "vacancy_1_id" integer,
+  "vacancy_2_id" integer,
+  "vacancy_3_id" integer,
+  "user_id" integer
+);
+
+CREATE TABLE "user_resume_soft" (
+  "id" serial PRIMARY KEY,
+  "soft_skill_id" integer,
+  "user_resume_id" integer
+);
+
+CREATE TABLE "user_resume_hard" (
+  "id" serial PRIMARY KEY,
+  "hard_skill_id" integer,
+  "user_resume_id" integer
+);
+
 ALTER TABLE "vacantion_hard_skills" ADD FOREIGN KEY ("vacancy_id") REFERENCES "vacancies" ("id");
 
 ALTER TABLE "vacantion_soft_skills" ADD FOREIGN KEY ("vacancy_id") REFERENCES "vacancies" ("id");
@@ -117,3 +160,27 @@ ALTER TABLE "resume_hard_skill" ADD FOREIGN KEY ("resume_id") REFERENCES "resume
 ALTER TABLE "resume_hard_skill" ADD FOREIGN KEY ("hard_skill_id") REFERENCES "hard_skills" ("id");
 
 ALTER TABLE "resume_soft_skill" ADD FOREIGN KEY ("soft_skill_id") REFERENCES "soft_skills" ("id");
+
+ALTER TABLE "middle_soft_skills" ADD FOREIGN KEY ("vacancy_id") REFERENCES "middle_vacancies" ("id");
+
+ALTER TABLE "middle_hard_skills" ADD FOREIGN KEY ("vacancy_id") REFERENCES "middle_vacancies" ("id");
+
+ALTER TABLE "middle_hard_skills" ADD FOREIGN KEY ("hard_skill_id") REFERENCES "hard_skills" ("id");
+
+ALTER TABLE "middle_soft_skills" ADD FOREIGN KEY ("soft_skill_id") REFERENCES "soft_skills" ("id");
+
+ALTER TABLE "user_resumes" ADD FOREIGN KEY ("user_id") REFERENCES "users" ("id");
+
+ALTER TABLE "user_resumes" ADD FOREIGN KEY ("vacancy_1_id") REFERENCES "middle_vacancies" ("id");
+
+ALTER TABLE "user_resumes" ADD FOREIGN KEY ("vacancy_2_id") REFERENCES "middle_vacancies" ("id");
+
+ALTER TABLE "user_resumes" ADD FOREIGN KEY ("vacancy_3_id") REFERENCES "middle_vacancies" ("id");
+
+ALTER TABLE "user_resume_hard" ADD FOREIGN KEY ("hard_skill_id") REFERENCES "hard_skills" ("id");
+
+ALTER TABLE "user_resume_soft" ADD FOREIGN KEY ("user_resume_id") REFERENCES "user_resumes" ("id");
+
+ALTER TABLE "user_resume_hard" ADD FOREIGN KEY ("user_resume_id") REFERENCES "user_resumes" ("id");
+
+ALTER TABLE "user_resume_soft" ADD FOREIGN KEY ("soft_skill_id") REFERENCES "soft_skills" ("id");
