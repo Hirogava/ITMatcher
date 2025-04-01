@@ -1,4 +1,4 @@
-package hrclient
+package userclient
 
 import (
 	"gaspr/cookies"
@@ -6,9 +6,9 @@ import (
 	"net/http"
 )
 
-func LoginHR(email string, password string, db *db.DBManager, store *cookies.CookieManager, w http.ResponseWriter, r *http.Request) error {
+func LoginUser(email string, password string, db *db.DBManager, store *cookies.CookieManager, w http.ResponseWriter, r *http.Request) error {
 
-	id, username, err := db.CheckHr(email, password)
+	id, username, err := db.CheckUser(email, password)
 	if err != nil {
 		return err
 	}
@@ -26,9 +26,9 @@ func Logout(username string, store *cookies.CookieManager, w http.ResponseWriter
 	return store.Session.Save(r, w)
 }
 
-func RegisterHR(password string, email string, db *db.DBManager,  store *cookies.CookieManager, w http.ResponseWriter, r *http.Request) error {
+func RegisterUser(password string, email string, db *db.DBManager,  store *cookies.CookieManager, w http.ResponseWriter, r *http.Request) error {
 	
-	id, username, err := db.RegisterHr(email, password)
+	id, username, err := db.RegisterUser(email, password)
 	if err != nil {
 		return err
 	}
