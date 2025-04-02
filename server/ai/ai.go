@@ -2,6 +2,7 @@ package nlp
 
 import (
 	"bytes"
+	"database/sql"
 	"encoding/json"
 	"fmt"
 	"gaspr/db"
@@ -14,12 +15,12 @@ import (
 	"strconv"
 )
 
-type ResumeData struct{
-	ResumeId int `json:"resume_id"`
+type ResumeData struct {
+	ResumeId  int `json:"resume_id"`
 	VacancyId int `json:"vacancy_id"`
 }
 
-func SaveFiles(w http.ResponseWriter, r *http.Request, db *db.DBManager){
+func SaveFiles(w http.ResponseWriter, r *http.Request, db *db.DBManager) {
 	log.Println("Запрос получен")
 	if err := r.ParseMultipartForm(10 << 20); err != nil {
 		log.Printf("Ошибка обработки multipart-запроса: %v", err)
@@ -67,17 +68,26 @@ func SaveFiles(w http.ResponseWriter, r *http.Request, db *db.DBManager){
 				return
 			}
 
-			resume, err := io.ReadAll(file)
+			resumeFile, err := io.ReadAll(file)
 			if err != nil {
 				log.Println(err)
 				return
 			}
 
-			resumeData, err := aiRequest(string(resume))
+			resumeData, err := aiRequest(string(resumeFile))
 			if err != nil {
 				log.Println(err)
 				return
 			}
+			var result map[string][]string
+			if err := json.Unmarshal([]byte(resumeData), &result); err != nil {
+				log.Printf("Ошибка при декодировании ответа AI: %v", err)
+				http.Error(w, "Ошибка при обработке данных AI", http.StatusInternalServerError)
+				return
+			}
+
+			saveHardSoftSkills(result["hard_skills"], result["soft_skills"], resume.ResumeId, db)
+
 			dst.WriteString(resumeData)
 
 			log.Println("Файл успешно загружен")
@@ -87,15 +97,62 @@ func SaveFiles(w http.ResponseWriter, r *http.Request, db *db.DBManager){
 	}
 }
 
-func aiRequest (resume string) (string, error) {
-	cmd := exec.Command("python", "ai\\main.py")
-    cmd.Stdin = bytes.NewBufferString(resume)
+func saveHardSoftSkills(hard_skills []string, soft_skills []string, resume_id int, db *db.DBManager) {
+
+	for _, skill := range hard_skills {
+		var hardSkillID int
+		err := db.DB.QueryRow("SELECT id FROM hard_skills WHERE hard_skill = $1", skill).Scan(&hardSkillID)
+		if err != nil {
+			if err == sql.ErrNoRows {
+				err = db.DB.QueryRow("INSERT INTO hard_skills (hard_skill) VALUES ($1) RETURNING id", skill).Scan(&hardSkillID)
+				if err != nil {
+					log.Printf("Ошибка при добавлении hard_skill: %v", err)
+					continue
+				}
+			} else {
+				log.Printf("Ошибка при проверке hard_skill: %v", err)
+				continue
+			}
+		}
+
+		_, err = db.DB.Exec("INSERT INTO resume_hard_skill (resume_id, hard_skill_id) VALUES ($1, $2)", resume_id, hardSkillID)
+		if err != nil {
+			log.Printf("Ошибка при добавлении в resume_hard_skill: %v", err)
+		}
+	}
+
+	for _, skill := range soft_skills {
+		var softSkillID int
+		err := db.DB.QueryRow("SELECT id FROM soft_skills WHERE soft_skill = $1", skill).Scan(&softSkillID)
+		if err != nil {
+			if err == sql.ErrNoRows {
+				err = db.DB.QueryRow("INSERT INTO soft_skills (soft_skill) VALUES ($1) RETURNING id", skill).Scan(&softSkillID)
+				if err != nil {
+					log.Printf("Ошибка при добавлении soft_skill: %v", err)
+					continue
+				}
+			} else {
+				log.Printf("Ошибка при проверке soft_skill: %v", err)
+				continue
+			}
+		}
+
+		_, err = db.DB.Exec("INSERT INTO resume_soft_skill (resume_id, soft_skill_id) VALUES ($1, $2)", resume_id, softSkillID)
+		if err != nil {
+			log.Printf("Ошибка при добавлении в resume_soft_skill: %v", err)
+		}
+	}
+}
+
+func aiRequest(resume string) (string, error) {
+	cmd := exec.Command("python", "ai/main.py")
+	cmd.Stdin = bytes.NewBufferString(resume)
 	cmd.Env = append(os.Environ(), "PYTHONIOENCODING=utf-8")
 
-    output, err := cmd.CombinedOutput()
-    if err != nil {
-        return "", fmt.Errorf("AI request failed: %v, output: %s", err, string(output))
-    }
+	output, err := cmd.CombinedOutput()
+	if err != nil {
+		return "", fmt.Errorf("AI request failed: %v, output: %s", err, string(output))
+	}
 
 	return string(output), nil
 }
