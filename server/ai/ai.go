@@ -59,7 +59,7 @@ func SaveFiles(w http.ResponseWriter, r *http.Request, db *db.DBManager){
 				return
 			}
 			
-			dstPath := filepath.Join(dir, fileHeader.Filename)
+			dstPath := filepath.Join(dir, "resume.json")
 			dst, err := os.Create(dstPath)
 			if err != nil {
 				log.Printf("Ошибка при создании файла: %v", err)
