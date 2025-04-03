@@ -17,7 +17,7 @@ try:
 
     completion = client.chat.completions.create(
         extra_body={},
-        model="google/gemini-2.5-pro-exp-03-25:free",
+        model="deepseek/deepseek-chat-v3-0324:free",
         messages=[
             {
                 "role": "user",
