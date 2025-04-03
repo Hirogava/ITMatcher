@@ -4,7 +4,7 @@ from openai import OpenAI
 
 client = OpenAI(
     base_url="https://openrouter.ai/api/v1",
-    api_key="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",
+    api_key="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",
 )
 
 def sanitize_text(text):
@@ -17,7 +17,7 @@ try:
 
     completion = client.chat.completions.create(
         extra_body={},
-        model="qwen/qwen2.5-vl-32b-instruct:free",
+        model="google/gemini-2.5-pro-exp-03-25:free",
         messages=[
             {
                 "role": "user",
