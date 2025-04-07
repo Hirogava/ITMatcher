@@ -8,13 +8,13 @@ import (
 	"github.com/gorilla/sessions"
 )
 
-type CookieManager struct {
+type Manager struct {
 	Session *sessions.Session
 }
 
-var store *sessions.CookieStore 
+var store *sessions.CookieStore
 
-func init() {
+func Init() {
 	key := generateSecretKey()
 	store = sessions.NewCookieStore([]byte(key))
 	store.Options.HttpOnly = true
@@ -23,9 +23,9 @@ func init() {
 
 }
 
-func NewCookieManager(r *http.Request) *CookieManager {
+func NewCookieManager(r *http.Request) *Manager {
 	session, _ := store.Get(r, "session-name")
-	return &CookieManager{
+	return &Manager{
 		Session: session,
 	}
 }
@@ -38,4 +38,3 @@ func generateSecretKey() string {
 	}
 	return base64.URLEncoding.EncodeToString(key)
 }
-
