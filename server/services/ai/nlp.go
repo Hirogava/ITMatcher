@@ -1,5 +1,4 @@
 package ai
-<<<<<<< HEAD
 
 import (
 	"bytes"
@@ -26,5 +25,3 @@ func Request(resume string) (map[string][]string, error) {
 
 	return result, nil
 }
-=======
->>>>>>> 03e1338 (шалю)

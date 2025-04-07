@@ -1,5 +1,4 @@
 package services
-<<<<<<< HEAD
 
 import (
 	"bufio"
@@ -38,5 +37,3 @@ func LoadEnv(filename string) error {
 
 	return nil
 }
-=======
->>>>>>> 03e1338 (шалю)
