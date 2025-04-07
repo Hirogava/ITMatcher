@@ -8,90 +8,237 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
-type DBManager struct {
-	DB *sql.DB
-	WG *sync.WaitGroup
-	MU *sync.RWMutex
+type Manager struct {
+	Conn *sql.DB
+	WG   *sync.WaitGroup
+	MU   *sync.RWMutex
 }
 
-func NewDBManager(driver string, connStr string) (*DBManager, error) {
-	db, err := sql.Open(driver, connStr)
+func NewDBManager(driverName string, sourceName string) *Manager {
+	db, err := sql.Open(driverName, sourceName)
 	if err != nil {
-		return nil, err
+		panic(fmt.Sprintf("Не удалось подключиться к базе данных: %v", err))
 	}
-	err = db.Ping()
-	if err != nil {
-		return nil, err
+
+	if err = db.Ping(); err != nil {
+		panic(fmt.Sprintf("База данных не отвечает: %v", err))
 	}
-	wg := &sync.WaitGroup{}
-	mu := &sync.RWMutex{}
-	return &DBManager{DB: db, WG: wg, MU: mu}, nil
+
+	return &Manager{
+		Conn: db,
+		WG:   &sync.WaitGroup{},
+		MU:   &sync.RWMutex{},
+	}
 }
 
-func (d *DBManager) Close() {
-	d.DB.Close()
-	d.DB = nil
+func (manager *Manager) Close() {
+	if manager.Conn != nil {
+		manager.Conn.Close()
+		manager.Conn = nil
+	}
 }
 
-func (d *DBManager) CheckHr(email, password string) (int, string, error){
-	query := `SELECT hash_password, username, id FROM hr WHERE email=$1`
-	var hash, user string
-	var id int
-	err := d.DB.QueryRow(query, email).Scan(&hash, &user, &id)
-	if err != nil{
-		return 0, "", err
-	}
-	
-	err = bcrypt.CompareHashAndPassword([]byte(hash), []byte(password))
-	if err != nil{
-		return 0, "", err
-	}
-	
-	return id, user, nil
-}
-
-func (db *DBManager) RegisterHr(email, password string) (int, string, error){
+/*
+Users
+*/
+func (manager *Manager) Register(table, email, password, username string) (int, error) {
 	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
-	if err != nil{
-		return 0, "",fmt.Errorf("ошибка генерации хеша: %w", err)
-	}
+
+	query := fmt.Sprintf(`INSERT INTO %s (email, hash_password, username) VALUES ($1, $2, $3) RETURNING id`, table)
 	var id int
-	var username string
-	err = db.DB.QueryRow("INSERT INTO hr (email, hash_password) VALUES ($1, $2) RETURNING id, username", email, hashedPassword).Scan(&id, &username)
-	if err != nil{
-    	return 0, "", err
+	err = manager.Conn.QueryRow(query, email, hashedPassword, username).Scan(&id)
+	if err != nil {
+		return 0, err
 	}
+
+	return id, nil
+}
+
+func (manager *Manager) Authenticate(table, email, password string) (int, string, error) {
+	var hash, username string
+	var id int
+	err := manager.Conn.QueryRow(fmt.Sprintf(`SELECT hash_password, username, id FROM %s WHERE email=$1`, table), email).Scan(&hash, &username, &id)
+	if err != nil {
+		return 0, "", err
+	}
+
+	if err = bcrypt.CompareHashAndPassword([]byte(hash), []byte(password)); err != nil {
+		return 0, "", err
+	}
+
 	return id, username, nil
 }
 
-func (db *DBManager) CheckUser(email, password string) (int, string, error){
-	query := `SELECT hash_password, username, id FROM users WHERE email=$1`
-	var hash, user string
-	var id int
-	err := db.DB.QueryRow(query, email).Scan(&hash, &user, &id)
-	if err != nil{
-		return 0, "", err
-	}
-	
-	err = bcrypt.CompareHashAndPassword([]byte(hash), []byte(password))
-	if err != nil{
-		return 0, "", err
+/*
+Skills
+*/
+func (manager *Manager) getSkillIdByName(table, skillType, skillName string) (int, error) {
+	query := fmt.Sprintf(`SELECT id FROM %s WHERE %s = $1`, table, skillType)
+
+	var skillId int
+
+	err := manager.Conn.QueryRow(query, skillName).Scan(&skillId)
+	if err != nil {
+		return 0, err
 	}
 
-	return id, user, nil
+	return skillId, nil
 }
 
-func (db *DBManager) RegisterUser(email, password string) (int, string, error){
-	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
-	if err != nil{
-		return 0, "",fmt.Errorf("ошибка генерации хеша: %w", err)
+func (manager *Manager) GetHardSkillByName(skillName string) (int, error) {
+	return manager.getSkillIdByName("hard_skills", "hard_skill", skillName)
+}
+func (manager *Manager) GetSoftSkillByName(skillName string) (int, error) {
+	return manager.getSkillIdByName("soft_skills", "soft_skill", skillName)
+}
+
+func (manager *Manager) createSkill(tableName, skillType, skillName string) (int, error) {
+	query := fmt.Sprintf(`INSERT INTO %s (%s) VALUES ($1) RETURNING id`, tableName, skillType)
+	var skillId int
+	err := manager.Conn.QueryRow(query, skillName).Scan(&skillId)
+
+	if err != nil {
+		return 0, err
 	}
-	var id int
-	var username string
- 
-	err = db.DB.QueryRow("INSERT INTO users (email, hash_password) VALUES ($1, $2) RETURNING id, username", email, hashedPassword).Scan(&id, &username)
-	if err != nil{
-		return 0, "", err
+	return skillId, nil
+}
+
+func (manager *Manager) CreateHardSkill(skillName string) (int, error) {
+	return manager.createSkill("hard_skills", "hard_skill", skillName)
+}
+func (manager *Manager) CreateSoftSkill(skillName string) (int, error) {
+	return manager.createSkill("soft_skills", "soft_skill", skillName)
+}
+
+/*
+Resume
+*/
+type Resume struct {
+	Id          int
+	FinderId    int
+	FirstName   string
+	LastName    string
+	Surname     string
+	Email       string
+	PhoneNumber string
+	VacancyId   int
+}
+
+func (manager *Manager) GetResumeById(resumeId int) (*Resume, error) {
+	var resume Resume
+	query := "SELECT id, finder_id, first_name, last_name, surname, email, phone_number, vacancy_id FROM resumes WHERE id = $1"
+	err := manager.Conn.QueryRow(query, resumeId).Scan(&resume.Id, &resume.FinderId, &resume.FirstName, &resume.LastName, &resume.Surname, &resume.Email, &resume.PhoneNumber, &resume.VacancyId)
+	if err != nil {
+		return nil, err
 	}
-	return id, username, nil
+	return &resume, nil
+}
+
+func (manager *Manager) GetAllResumes() ([]Resume, error) {
+	var resumes []Resume
+	query := "SELECT id, finder_id, first_name, last_name, surname, email, phone_number, vacancy_id FROM resumes"
+	rows, err := manager.Conn.Query(query)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var resume Resume
+		err := rows.Scan(&resume.Id, &resume.FinderId, &resume.FirstName, &resume.LastName, &resume.Surname, &resume.Email, &resume.PhoneNumber, &resume.VacancyId)
+		if err != nil {
+			return nil, err
+		}
+		resumes = append(resumes, resume)
+	}
+
+	if err = rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return resumes, nil
+}
+
+func (manager *Manager) CreateResume(finderId int, firstName, lastName, surName, email, phoneNumber string, vacancyId int) (int, error) {
+	var resumeId int
+	query := "INSERT INTO resumes (finder_id, first_name, last_name, surname, email, phone_number, vacancy_id) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id"
+	err := manager.Conn.QueryRow(query, finderId, firstName, lastName, surName, email, phoneNumber, vacancyId).Scan(&resumeId)
+	if err != nil {
+		return 0, err
+	}
+	return resumeId, nil
+}
+
+func (manager *Manager) createResumeSkill(tableName, skillType string, resumeId, skillId int) error {
+	query := fmt.Sprintf(`INSERT INTO %s (resume_id, %s) VALUES ($1, $2)`, tableName, skillType)
+
+	_, err := manager.Conn.Exec(query, resumeId, skillId)
+	return err
+}
+
+func (manager *Manager) CreateResumeHardSkill(resumeId int, skillId int) error {
+	return manager.createResumeSkill("resume_hard_skill", "hard_skill_id", resumeId, skillId)
+}
+func (manager *Manager) CreateResumeSoftSkill(resumeId int, skillId int) error {
+	return manager.createResumeSkill("resume_soft_skill", "soft_skill_id", resumeId, skillId)
+}
+
+/*
+HR
+*/
+func (manager *Manager) GetHRIdByUsername(username string) (int, error) {
+	var hrId int
+	err := manager.Conn.QueryRow("SELECT id FROM hr WHERE username = $1", username).Scan(&hrId)
+	if err != nil {
+		return 0, err
+	}
+	return hrId, nil
+}
+
+/*
+Vacancy
+*/
+func (manager *Manager) CreateVacancy(name string) (int, error) {
+	var vacId int
+	err := manager.Conn.QueryRow("INSERT INTO vacancies (name) VALUES ($1) RETURNING id", name).Scan(&vacId)
+	if err != nil {
+		return 0, err
+	}
+	return vacId, err
+}
+
+func (manager *Manager) GetVacancyIdByName(name string) (int, error) {
+	var vacId int
+	err := manager.Conn.QueryRow("SELECT id FROM vacancies WHERE name = $1", name).Scan(&vacId)
+	if err != nil {
+		return 0, err
+	}
+	return vacId, nil
+}
+
+func (manager *Manager) createVacancySkill(tableName, skillType string, vacancyId, skillId int) error {
+	query := fmt.Sprintf(`INSERT INTO %s (vacancy_id, %s) VALUES ($1, $2)`, tableName, skillType)
+
+	_, err := manager.Conn.Exec(query, vacancyId, skillId)
+	return err
+}
+
+func (manager *Manager) CreateVacancyHardSkill(vacancyId int, skillId int) error {
+	return manager.createVacancySkill("vacantion_hard_skills", "hard_skill_id", vacancyId, skillId)
+}
+func (manager *Manager) CreateVacancySoftSkill(vacancyId int, skillId int) error {
+	return manager.createVacancySkill("vacantion_soft_skills", "soft_skill_id", vacancyId, skillId)
+}
+
+/*
+Finder
+*/
+func (manager *Manager) CreateFinder(portfolio bool, hrId int) (int, error) {
+	var finderId int
+	query := "INSERT INTO finders (portfolio, hr_id) VALUES ($1, $2) RETURNING id"
+	err := manager.Conn.QueryRow(query, portfolio, hrId).Scan(&finderId)
+	if err != nil {
+		return 0, err
+	}
+	return finderId, nil
 }

@@ -1,51 +1,114 @@
 package main
 
 import (
+	"encoding/json"
+	"fmt"
 	"gaspr/db"
-	"gaspr/ai"
-	"gaspr/external_requests"
+	"gaspr/handlers"
+	middleware "gaspr/handlers/middlewares"
+	"gaspr/services"
+	"gaspr/services/ai"
+	"gaspr/services/cookies"
 	"html/template"
+	"io"
 	"log"
 	"net/http"
+	"os"
 
 	"github.com/gorilla/mux"
-	_ "github.com/lib/pq"
 )
 
 func main() {
-	dB, err := db.NewDBManager("postgres", "user=postgres password=197320 dbname=projectDB sslmode=disable")
-	if err != nil {
-		log.Fatalf("Ошибка подключения к базе данных: %v", err)
-	}
-	defer dB.Close()
+	/*
+		Initialization
+	*/
+	services.LoadEnv(".env")
+	manager := db.NewDBManager("postgres", os.Getenv("DB_CONNECTION_STRING"))
+	db.Migrate(manager)
 
-	if err = db.Migrate(dB); err != nil {
-		log.Fatalf("Ошибка миграции базы данных: %v", err)
-	}
-	log.Println("Миграция базы данных завершена успешно")
+	log.Println("База данных успешно инициализирована и мигрирована.")
+	defer manager.Close()
 
+	cookies.Init()
 	r := mux.NewRouter()
 
-	r.HandleFunc("/test", func(w http.ResponseWriter, r *http.Request) {
-		tmpl := template.Must(template.ParseFiles("./test.html"))
+	/*
+		Static files
+	*/
+	r.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		tmpl := template.Must(template.ParseFiles("./static/index.html"))
 		tmpl.Execute(w, nil)
 	})
 
-	r.HandleFunc("/get_resume", func(w http.ResponseWriter, r *http.Request) {
-		externalrequests.GetResume(w, r, dB)
+	/*
+		API
+	*/
+	r.HandleFunc("/api/register", func(w http.ResponseWriter, r *http.Request) {
+		handlers.Register(manager, w, r)
 	}).Methods(http.MethodPost)
 
-	r.HandleFunc("/nlp", func(w http.ResponseWriter, r *http.Request){
-		nlp.SaveFiles(w, r, dB)
+	r.HandleFunc("/api/auth", func(w http.ResponseWriter, r *http.Request) {
+		handlers.Login(manager, w, r)
 	}).Methods(http.MethodPost)
 
+	r.Handle("/api/logout",
+		http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			handlers.Logout(w, r)
+		})).Methods(http.MethodPost)
+
+	// пока в main'е
+	r.HandleFunc("/api/nlp", func(w http.ResponseWriter, r *http.Request) {
+		file, _, err := r.FormFile("file")
+		if err != nil {
+			http.Error(w, fmt.Sprintf("Ошибка при получении файла: %v", err), http.StatusBadRequest)
+			return
+		}
+		defer file.Close()
+
+		fileData, err := io.ReadAll(file)
+		if err != nil {
+			http.Error(w, fmt.Sprintf("Ошибка при чтении файла: %v", err), http.StatusBadRequest)
+			return
+		}
+
+		result, err := ai.Request(string(fileData))
+		if err != nil {
+			http.Error(w, fmt.Sprintf("Ошибка AI модуля: %v", err), http.StatusInternalServerError)
+			return
+		}
+
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(result)
+	}).Methods(http.MethodPost)
+
+	r.HandleFunc("/api/send_resume", func(w http.ResponseWriter, r *http.Request) {
+		handlers.SendResume(w, r, manager)
+	}).Methods(http.MethodPost)
+
+	/*
+		API - HR
+	*/
+	r.Handle("/api/hr/resume", middleware.AuthRequired("hr",
+		http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			handlers.ResumeById(w, r, manager)
+		}))).Methods(http.MethodGet)
+
+	r.Handle("/api/hr/resumes", middleware.AuthRequired("hr",
+		http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			handlers.ResumesList(w, r, manager)
+		}))).Methods(http.MethodGet)
+
+	/*
+		Server initialization
+	*/
+	serverPort := os.Getenv("SERVER_PORT")
 	server := &http.Server{
-		Addr:    ":8080",
+		Addr:    fmt.Sprintf(":%s", serverPort),
 		Handler: r,
 	}
 
-	log.Println("Сервер запущен на порту 8080")
-    if err := server.ListenAndServe(); err != nil {
-        log.Fatal(err)
-    }
+	log.Println("Сервер запущен на порту " + serverPort)
+	if err := server.ListenAndServe(); err != nil {
+		log.Fatal(err)
+	}
 }

@@ -1,2 +1,6 @@
 finders
 aiData
+.env
+.idea
+/server/finder/
+/server/vacancy/
