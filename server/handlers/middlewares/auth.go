@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 package middleware
 
 import (
@@ -15,3 +16,6 @@ func AuthRequired(userType string, next http.Handler) http.Handler {
 		next.ServeHTTP(w, r)
 	})
 }
+=======
+package middlewares
+>>>>>>> 03e1338 (шалю)
