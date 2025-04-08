@@ -22,7 +22,7 @@ func main() {
 	/*
 		Initialization
 	*/
-	services.LoadEnv(".env")
+	services.LoadEnvFile(".env")
 	manager := db.NewDBManager("postgres", os.Getenv("DB_CONNECTION_STRING"))
 	db.Migrate(manager)
 
@@ -36,7 +36,7 @@ func main() {
 		Static files
 	*/
 	r.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		tmpl := template.Must(template.ParseFiles("./static/index.html"))
+		tmpl := template.Must(template.ParseFiles("./static/html/landing.html"))
 		tmpl.Execute(w, nil)
 	})
 
