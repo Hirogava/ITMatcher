@@ -110,6 +110,7 @@ func main() {
 	/*
 		Server initialization
 	*/
+	r.PathPrefix("/static/").Handler(http.StripPrefix("/static/", http.FileServer(http.Dir("static"))))
 	serverPort := os.Getenv("SERVER_PORT")
 	server := &http.Server{
 		Addr:    fmt.Sprintf(":%s", serverPort),
