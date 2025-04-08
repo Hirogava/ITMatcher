@@ -1,0 +1,161 @@
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,100..900;1,100..900&family=Raleway:ital,wght@0,100..900;1,100..900&display=swap');
+
+:root {
+    --primary-color: #377EF0; /* Исходный цвет */
+    transition: color 0.3s ease, background-color 0.3s ease;
+}
+
+body{
+    background-color: #E8F0F5 !important;
+    font-family: 'Raleway', sans-serif !important;
+    font-weight: 400 !important;
+}
+
+a{
+    color: #4D4D4D !important;
+}
+
+a:hover{
+    filter:brightness(0);
+    transition: linear 0.05s;
+}
+
+.color-primary{
+    color: var(--primary-color) !important;
+    transition: color 0.3s ease;
+}
+
+.color-secondary{
+    color: #4D4D4D !important;
+}
+
+.h-font, .navbar-brand, h1, h2, h3, h6{
+    font-family: 'Montserrat', sans-serif !important;
+    font-weight: 800;
+}
+
+footer{
+    background-color: #D8DEE4 !important;
+    padding: 20px 0px;
+    margin-top: 20px;
+    border-top: #C3C9CE 4px solid;
+}
+
+.footer-h{
+    color: #636363;
+}
+
+.rounded {
+    border-radius: 30px !important;
+}
+
+.button{
+    padding: 10px 80px;
+    font-size: 20px;
+    text-decoration: none;
+}
+
+.button:hover{
+    filter: brightness(1.2);
+    transition: linear 0.05s;
+}
+
+.nav-link {
+    font-family: 'Raleway', sans-serif !important;
+    font-weight: 600 !important;
+    color: #4D4D4D;
+}
+
+.text-transition {
+    transition: opacity 0.15s ease !important; /* Плавный переход для прозрачности */
+    opacity: 1 !important; /* Начальное состояние */
+}
+
+.text-transition.hidden {
+    opacity: 0 !important; /* Скрытое состояние */
+}
+
+.nav-link:hover {
+    color: black !important;
+    transition: linear 0.2s;
+}
+
+.border-bottom {
+    background-color: white !important;
+    border-bottom: 3px solid #E6E6E6 !important;
+}
+
+.border {
+    background-color: white !important;
+    border: 3px solid #E6E6E6 !important;
+}
+
+.selected{
+    background-color: var(--primary-color) !important;
+    transition: all 0.3s ease;
+}
+
+.selected_finder{
+    background-color: #19C580 !important;
+    color: white !important;
+}
+
+.separator{
+    height: 3px;
+    margin-top: 60px;
+    margin-bottom: 60px;
+    background-color: #F2F2F2;
+}
+
+.toggle-switch {
+    position: relative;
+    width: 400px;
+    height: 50px;
+    background-color: #ddd;
+    border-radius: 25px;
+    cursor: pointer;
+    overflow: hidden;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+
+.switch-thumb {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 50%;
+    height: 100%;
+    background-color: var(--primary-color);
+    border-radius: 25px;
+    transition: transform 0.3s ease, background-color 0.3s ease;
+    z-index: 1;
+}
+
+.toggle-switch.active .switch-thumb {
+    transform: translateX(100%);
+    background-color: #19C580;
+}
+
+.switch-labels {
+    display: flex;
+    height: 100%;
+    position: relative;
+    z-index: 2;
+}
+
+.label {
+    width: 50%;
+    text-align: center;
+    line-height: 50px;
+    font-weight: bold;
+    user-select: none;
+    transition: color 0.3s ease;
+    color: #555;
+}
+
+.toggle-switch.active .label.off {
+    color: white;
+}
+
+.toggle-switch:not(.active) .label.on {
+    color: white;
+}
