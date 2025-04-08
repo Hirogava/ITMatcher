@@ -152,41 +152,37 @@
     <script>
         const switchEl = document.getElementById('mySwitch');
     
-        // Добавляем обработчик для переключателя
         switchEl.addEventListener('click', () => {
             switchEl.classList.toggle('active');
     
-            // Меняем основной цвет страницы
             const root = document.documentElement;
             if (switchEl.classList.contains('active')) {
-                root.style.setProperty('--primary-color', '#19C580'); // Новый цвет
+                root.style.setProperty('--primary-color', '#19C580');
     
-                // Меняем текст для соискателей с анимацией
                 const paragraphs = document.getElementsByName('forwho');
                 paragraphs.forEach((paragraph, index) => {
                     const textElement = paragraph.nextElementSibling;
-                    textElement.classList.add('hidden'); // Скрываем текст
+                    textElement.classList.add('hidden');
                     setTimeout(() => {
                         if (index === 0) textElement.textContent = 'Импортируйте свое резюме через личный кабинет в любом формате';
                         if (index === 1) textElement.textContent = 'Алгоритмы машинного обучения выделят из резюме самое главное, сравнят его с актуальными требованиями вакансий';
                         if (index === 2) textElement.textContent = 'Рекомендательная система укажет, какие навыки необходимо вам освоить для получения оффера мечты';
-                        textElement.classList.remove('hidden'); // Показываем текст
-                    }, 150); // Ждем завершения анимации скрытия
+                        textElement.classList.remove('hidden');
+                    }, 150);
                 });
             } else {
-                root.style.setProperty('--primary-color', '#377EF0'); // Исходный цвет
+                root.style.setProperty('--primary-color', '#377EF0');
     
-                // Возвращаем текст для рекрутеров с анимацией
                 const paragraphs = document.getElementsByName('forwho');
                 paragraphs.forEach((paragraph, index) => {
                     const textElement = paragraph.nextElementSibling;
-                    textElement.classList.add('hidden'); // Скрываем текст
+                    textElement.classList.add('hidden');
                     setTimeout(() => {
                         if (index === 0) textElement.textContent = 'Автоматизированный анализ сокращает рутинные задачи рекрутеров и помогает кандидатам быстрее находить работу';
                         if (index === 1) textElement.textContent = 'Алгоритмы машинного обучения выделят из резюме самое главное, сравнят его с потребностями вакансии и карты компетенций';
                         if (index === 2) textElement.textContent = 'Сортировка кандидатов по совпадению компетенций соискателя и требованиям вакансии';
-                        textElement.classList.remove('hidden'); // Показываем текст
-                    }, 150); // Ждем завершения анимации скрытия
+                        textElement.classList.remove('hidden');
+                    }, 150);
                 });
             }
         });

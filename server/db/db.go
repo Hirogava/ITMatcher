@@ -194,7 +194,7 @@ func (manager *Manager) CreateUserResumeHardSkill(resumeId int, skillId int) err
 }
 func (manager *Manager) CreateUserResumeSoftSkill(resumeId int, skillId int) error {
 	return manager.createResumeSkill("user_resume_soft", "soft_skill_id", resumeId, skillId)
-} 
+}
 
 /*
 HR

@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+    <link rel="stylesheet" type="text/css" href="static/style.css">
+    <title>Название</title>
+</head>
+<body>
+    <header class="border-bottom mb-3">
+        <div class="container">
+            <nav class="navbar navbar-expand-lg" data-bs-theme="light">
+                <div class="container-fluid">
+                  <a class="navbar-brand color-primary fs-3" href="#">LOGO</a>
+                  <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarColor03" aria-controls="navbarColor03" aria-expanded="false" aria-label="Toggle navigation">
+                    <span class="navbar-toggler-icon"></span>
+                  </button>
+                  <div class="collapse navbar-collapse" id="navbarColor03">
+                    <ul class="navbar-nav me-auto mb-2 mb-lg-0 mx-auto">
+                      <li class="nav-item mx-3">
+                        <a class="nav-link active fs-6" aria-current="page" href="#">О проекте</a>
+                      </li>
+                      <li class="nav-item mx-3">
+                        <a class="nav-link fs-6" href="#">Что-то еще</a>
+                      </li>
+                      <li class="nav-item mx-3">
+                        <a class="nav-link fs-6" href="#">Еще что-то</a>
+                      </li>
+                    </ul>
+                    <img src="" alt="131323">
+                  </div>
+                </div>
+              </nav>
+        </div>
+    </header>
+
+
+    <div class="container bg-white shadow-sm p-3 mb-5 bg-body rounded colored-border" style="max-width: 700px">
+        <h4 class="h-font fw-bold text-center py-3">Регистрация</h4>
+
+        <div class="toggle-switch mx-auto" id="mySwitch">
+            <div class="switch-thumb"></div>
+            <div class="switch-labels">
+              <div class="label on">Рекрутер</div>
+              <div class="label off">Соискатель</div>
+            </div>
+        </div>
+
+        <form action="" style="width: 60%;" class="mx-auto mt-5">
+            <label for="username" class="fw-medium" id="username_label">Имя пользователя</label>
+            <input type="text" id="username" name="username" class="form-control mb-3" placeholder="Имя пользователя" required>
+
+            <label for="" class="fw-medium">Электронная почта</label>
+            <input type="email" id="email" name="email" class="form-control mb-3" placeholder="Электронная почта" required>
+
+            <label for="" class="fw-medium">Пароль</label>
+            <input type="password" id="password" name="password" class="form-control mb-3" placeholder="Пароль" required>
+            
+            <div class="d-flex justify-content-center mt-5 mb-2">
+                <a class="button rounded selected btn-lg ms-3 h-font fw-bold text-white" id="registerButton" onclick="register('hr')">Регистрация</a>
+            </div> 
+            <div class="d-flex justify-content-center mb-3">
+                <p>Уже есть аккаунт? <a href="">Войти</a></p> 
+            </div> 
+        </form>
+
+    </div>
+
+
+    <footer>
+        <div class="container">
+            <div class="row d-flex justify-content-center g-5">
+                <div class="col-sm-3">
+                    <h6 class="text-center footer-h">Рекрутерам</h6>
+                    <ul>
+                        <li><a href="">Вход</a></li>
+                        <li><a href="">Возможности</a></li>
+                    </ul>
+                </div>
+                <div class="col-sm-3">
+                    <h6 class="text-center footer-h">Соискателям</h6>
+                    <ul>
+                        <li><a href="">Вход</a></li>
+                        <li><a href="">Возможности</a></li>
+                    </ul>
+                </div>
+                <div class="col-sm-3">
+                    <h6 class="text-center footer-h">О нас</h6>
+                    <ul>
+                        <li><a href="">tg</a></li>
+                    </ul>
+                </div>
+                
+            </div>
+        </div>
+    </footer>
+    <script>
+        const switchEl = document.getElementById('mySwitch');
+        const usernameField = document.getElementById('username');
+        const usernameLabel = document.getElementById('username_label');
+        let regType = "hr";
+    
+        switchEl.addEventListener('click', () => {
+            switchEl.classList.toggle('active');
+            function register(role){
+                console.log(`Регистрация для роли: ${role}`);
+            }
+            const root = document.documentElement;
+            if (switchEl.classList.contains('active')) {
+                root.style.setProperty('--primary-color', '#19C580');
+                usernameField.style.display = 'none';
+                usernameLabel.style.display = 'none';
+                regType = "user"
+
+            } else {
+                root.style.setProperty('--primary-color', '#377EF0');
+                usernameField.style.display = 'block';
+                usernameLabel.style.display = 'block';
+                regType = "hr"
+            }
+        });
+
+        async function register(role) {
+        const username = document.getElementById('username').value;
+        const email = document.getElementById('email').value;
+        const password = document.getElementById('password').value;
+
+        const formData = {
+            username: role === "hr" ? username : null,
+            email: email,
+            password: password,
+            role: role
+        };
+
+        try {
+            const response = await fetch('/api/register', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(formData)
+            });
+
+            if (response.ok) {
+                const result = await response.json();
+                console.log('Успешная регистрация:', result);
+                alert('Регистрация прошла успешно!');
+            } else {
+                const error = await response.json();
+                console.error('Ошибка регистрации:', error);
+                alert('Ошибка регистрации: ' + error.message);
+            }
+        } catch (err) {
+            console.error('Ошибка сети:', err);
+            alert('Ошибка сети. Попробуйте позже.');
+        }
+    }
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.5/dist/js/bootstrap.bundle.min.js" integrity="sha384-k6d4wzSIapyDyv1kpU366/PK5hCdSbCRGRCMv+eplOQJWyd1fbcAu9OCUj5zNLiq" crossorigin="anonymous"></script>
+</body>
+</html>
