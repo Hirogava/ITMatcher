@@ -43,6 +43,9 @@ Users
 */
 func (manager *Manager) Register(table, email, password, username string) (int, error) {
 	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
+	if err != nil {
+		return 0, err
+	}
 
 	query := fmt.Sprintf(`INSERT INTO %s (email, hash_password, username) VALUES ($1, $2, $3) RETURNING id`, table)
 	var id int
@@ -124,7 +127,7 @@ type Resume struct {
 	VacancyId   int
 }
 
-func (manager *Manager) GetResumeById(resumeId int) (*Resume, error) {
+func (manager *Manager) GetResumeByIdForHr(resumeId int) (*Resume, error) {
 	var resume Resume
 	query := "SELECT id, finder_id, first_name, last_name, surname, email, phone_number, vacancy_id FROM resumes WHERE id = $1"
 	err := manager.Conn.QueryRow(query, resumeId).Scan(&resume.Id, &resume.FinderId, &resume.FirstName, &resume.LastName, &resume.Surname, &resume.Email, &resume.PhoneNumber, &resume.VacancyId)
@@ -134,10 +137,13 @@ func (manager *Manager) GetResumeById(resumeId int) (*Resume, error) {
 	return &resume, nil
 }
 
-func (manager *Manager) GetAllResumes() ([]Resume, error) {
+func (manager *Manager) GetAllResumesForHr(hr_id int) ([]Resume, error) {
 	var resumes []Resume
-	query := "SELECT id, finder_id, first_name, last_name, surname, email, phone_number, vacancy_id FROM resumes"
-	rows, err := manager.Conn.Query(query)
+	query := `SELECT r.id, r.finder_id, r.first_name, r.last_name, r.surname, r.email, r.phone_number, r.vacancy_id
+	FROM resumes r
+	JOIN finders f ON r.finder_id = f.id
+	WHERE f.hr_id = $1`
+	rows, err := manager.Conn.Query(query, hr_id)
 	if err != nil {
 		return nil, err
 	}
@@ -159,7 +165,7 @@ func (manager *Manager) GetAllResumes() ([]Resume, error) {
 	return resumes, nil
 }
 
-func (manager *Manager) CreateResume(finderId int, firstName, lastName, surName, email, phoneNumber string, vacancyId int) (int, error) {
+func (manager *Manager) CreateResumeForHr(finderId int, firstName, lastName, surName, email, phoneNumber string, vacancyId int) (int, error) {
 	var resumeId int
 	query := "INSERT INTO resumes (finder_id, first_name, last_name, surname, email, phone_number, vacancy_id) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id"
 	err := manager.Conn.QueryRow(query, finderId, firstName, lastName, surName, email, phoneNumber, vacancyId).Scan(&resumeId)
@@ -182,6 +188,13 @@ func (manager *Manager) CreateResumeHardSkill(resumeId int, skillId int) error {
 func (manager *Manager) CreateResumeSoftSkill(resumeId int, skillId int) error {
 	return manager.createResumeSkill("resume_soft_skill", "soft_skill_id", resumeId, skillId)
 }
+
+func (manager *Manager) CreateUserResumeHardSkill(resumeId int, skillId int) error {
+	return manager.createResumeSkill("user_resume_hard", "hard_skill_id", resumeId, skillId)
+}
+func (manager *Manager) CreateUserResumeSoftSkill(resumeId int, skillId int) error {
+	return manager.createResumeSkill("user_resume_soft", "soft_skill_id", resumeId, skillId)
+} 
 
 /*
 HR
@@ -241,4 +254,17 @@ func (manager *Manager) CreateFinder(portfolio bool, hrId int) (int, error) {
 		return 0, err
 	}
 	return finderId, nil
+}
+
+/*
+User
+*/
+func (manager *Manager) CreateResumeForUser(user_id int) (int, error) {
+	query := "INSERT INTO user_resumes (user_id) VALUES ($1) RETURNING id"
+	var resumeId int
+	err := manager.Conn.QueryRow(query, user_id).Scan(&resumeId)
+	if err != nil {
+		return 0, err
+	}
+	return resumeId, nil
 }

@@ -6,12 +6,15 @@ import (
 	"fmt"
 	"gaspr/db"
 	"gaspr/services/ai"
+	"gaspr/services/cookies"
 	"io"
 	"log"
 	"net/http"
 	"os"
 	"path/filepath"
 	"strconv"
+
+	"github.com/gorilla/mux"
 )
 
 type FinderForm struct {
@@ -26,7 +29,15 @@ type FinderForm struct {
 }
 
 func ResumesList(w http.ResponseWriter, r *http.Request, manager *db.Manager) {
-	resumes, err := manager.GetAllResumes()
+	vars := mux.Vars(r)
+	hr_id := vars["hr_id"]
+	int_id, err := strconv.Atoi(hr_id)
+	if err != nil {
+		http.Error(w, "Неверный формат ID", http.StatusBadRequest)
+		return
+	}
+
+	resumes, err := manager.GetAllResumesForHr(int_id)
 	if err != nil {
 		http.Error(w, fmt.Sprintf("Что-то пошло не так: %v", err), http.StatusInternalServerError)
 		return
@@ -64,7 +75,8 @@ func ResumesList(w http.ResponseWriter, r *http.Request, manager *db.Manager) {
 }
 
 func ResumeById(w http.ResponseWriter, r *http.Request, manager *db.Manager) {
-	id := r.URL.Query().Get("id")
+	vars := mux.Vars(r)
+	id := vars["id"]
 	if id == "" {
 		http.Error(w, "ID резюме не указан", http.StatusBadRequest)
 		return
@@ -76,7 +88,7 @@ func ResumeById(w http.ResponseWriter, r *http.Request, manager *db.Manager) {
 		return
 	}
 
-	resume, err := manager.GetResumeById(resumeId)
+	resume, err := manager.GetResumeByIdForHr(resumeId)
 	if err != nil {
 		http.Error(w, fmt.Sprintf("Ошибка при получении данных из БД: %v", err), http.StatusInternalServerError)
 		return
@@ -184,7 +196,7 @@ func SendResume(w http.ResponseWriter, r *http.Request, manager *db.Manager) {
 		return
 	}
 
-	resumeId, err = manager.CreateResume(finderId, finderData.FirstName, finderData.LastName, finderData.Surname, finderData.Email, finderData.Phone, vacId)
+	resumeId, err = manager.CreateResumeForHr(finderId, finderData.FirstName, finderData.LastName, finderData.Surname, finderData.Email, finderData.Phone, vacId)
 	if err != nil {
 		http.Error(w, fmt.Sprintf("Ошибка при записи в базу данных: %v", err), http.StatusInternalServerError)
 		return
@@ -220,56 +232,103 @@ func SendResume(w http.ResponseWriter, r *http.Request, manager *db.Manager) {
 		return
 	}
 
-	saveResumeSkills(resumeData["hard_skills"], resumeData["soft_skills"], resumeId, manager)
+	saveResumeSkills(resumeData["hard_skills"], resumeData["soft_skills"], resumeId, manager, "hr")
 
 	w.WriteHeader(http.StatusOK)
 	return
 }
 
-func saveResumeSkills(hardSkills []string, softSkills []string, resumeId int, manager *db.Manager) {
-
-	for _, skill := range hardSkills {
-		hardSkillID, err := manager.GetHardSkillByName(skill)
-		if err != nil {
-			if err == sql.ErrNoRows {
-				hardSkillID, err = manager.CreateHardSkill(skill)
-				if err != nil {
-					log.Printf("Ошибка при добавлении hard_skill: %v", err)
+func saveResumeSkills(hardSkills []string, softSkills []string, resumeId int, manager *db.Manager, role string) error {
+	if role == "hr"{
+		for _, skill := range hardSkills {
+			hardSkillID, err := manager.GetHardSkillByName(skill)
+			if err != nil {
+				if err == sql.ErrNoRows {
+					hardSkillID, err = manager.CreateHardSkill(skill)
+					if err != nil {
+						log.Printf("Ошибка при добавлении hard_skill: %v", err)
+						continue
+					}
+				} else {
+					log.Printf("Ошибка при проверке hard_skill: %v", err)
 					continue
 				}
-			} else {
-				log.Printf("Ошибка при проверке hard_skill: %v", err)
-				continue
+			}
+
+			err = manager.CreateResumeHardSkill(resumeId, hardSkillID)
+			if err != nil {
+				log.Printf("Ошибка при добавлении в resume_hard_skill: %v", err)
 			}
 		}
 
-		err = manager.CreateResumeHardSkill(resumeId, hardSkillID)
-		if err != nil {
-			log.Printf("Ошибка при добавлении в resume_hard_skill: %v", err)
-		}
-	}
-
-	for _, skill := range softSkills {
-		var softSkillID int
-		softSkillID, err := manager.GetSoftSkillByName(skill)
-		if err != nil {
-			if err == sql.ErrNoRows {
-				softSkillID, err = manager.CreateSoftSkill(skill)
-				if err != nil {
-					log.Printf("Ошибка при добавлении soft_skill: %v", err)
+		for _, skill := range softSkills {
+			var softSkillID int
+			softSkillID, err := manager.GetSoftSkillByName(skill)
+			if err != nil {
+				if err == sql.ErrNoRows {
+					softSkillID, err = manager.CreateSoftSkill(skill)
+					if err != nil {
+						log.Printf("Ошибка при добавлении soft_skill: %v", err)
+						continue
+					}
+				} else {
+					log.Printf("Ошибка при проверке soft_skill: %v", err)
 					continue
 				}
-			} else {
-				log.Printf("Ошибка при проверке soft_skill: %v", err)
-				continue
+			}
+
+			err = manager.CreateResumeSoftSkill(resumeId, softSkillID)
+			if err != nil {
+				log.Printf("Ошибка при добавлении в resume_soft_skill: %v", err)
+			}
+		}
+		return nil
+	} else if role == "finder"{
+		for _, skill := range hardSkills {
+			hardSkillID, err := manager.GetHardSkillByName(skill)
+			if err != nil {
+				if err == sql.ErrNoRows {
+					hardSkillID, err = manager.CreateHardSkill(skill)
+					if err != nil {
+						log.Printf("Ошибка при добавлении hard_skill: %v", err)
+						continue
+					}
+				} else {
+					log.Printf("Ошибка при проверке hard_skill: %v", err)
+					continue
+				}
+			}
+
+			err = manager.CreateUserResumeHardSkill(resumeId, hardSkillID)
+			if err != nil {
+				log.Printf("Ошибка при добавлении в resume_hard_skill: %v", err)
 			}
 		}
 
-		err = manager.CreateResumeSoftSkill(resumeId, softSkillID)
-		if err != nil {
-			log.Printf("Ошибка при добавлении в resume_soft_skill: %v", err)
+		for _, skill := range softSkills {
+			var softSkillID int
+			softSkillID, err := manager.GetSoftSkillByName(skill)
+			if err != nil {
+				if err == sql.ErrNoRows {
+					softSkillID, err = manager.CreateSoftSkill(skill)
+					if err != nil {
+						log.Printf("Ошибка при добавлении soft_skill: %v", err)
+						continue
+					}
+				} else {
+					log.Printf("Ошибка при проверке soft_skill: %v", err)
+					continue
+				}
+			}
+
+			err = manager.CreateUserResumeSoftSkill(resumeId, softSkillID)
+			if err != nil {
+				log.Printf("Ошибка при добавлении в resume_soft_skill: %v", err)
+			}
 		}
+		return nil
 	}
+	return fmt.Errorf("Неверно указана роль")
 }
 
 func saveVacancySkills(vacancyId int, hardSkills, softSkills []string, manager *db.Manager) {
@@ -315,4 +374,61 @@ func saveVacancySkills(vacancyId int, hardSkills, softSkills []string, manager *
 			log.Printf("Ошибка при добавлении в vacantion_soft_skill: %v", err)
 		}
 	}
+}
+
+func SaveUserResume(w http.ResponseWriter, r *http.Request, manager *db.Manager) {
+	vars := mux.Vars(r)
+	user_id := vars["user_id"]
+	intId, err := strconv.Atoi(user_id)
+	if err != nil {
+		http.Error(w, "Неверный формат ID", http.StatusBadRequest)
+		return
+	}
+	resumeFile, _, err := r.FormFile("resume")
+	if err != nil {
+		http.Error(w, fmt.Sprintf("Ошибка при получении файла: %v", err), http.StatusBadRequest)
+		return
+	}
+	defer resumeFile.Close()
+
+	resumeFileData, err := io.ReadAll(resumeFile)
+	if err != nil {
+        http.Error(w, fmt.Sprintf("Ошибка при чтении файла: %v", err), http.StatusBadRequest)
+        return
+	}
+
+	resumeDir := fmt.Sprintf("user/%d/resume", intId)
+	if err := os.MkdirAll(resumeDir, os.ModePerm); err != nil {
+		http.Error(w, fmt.Sprintf("Ошибка создания директории: %v", err), http.StatusInternalServerError)
+		return
+	}
+
+	resumeFilePath := filepath.Join(resumeDir, "resume.txt")
+	if err := os.WriteFile(resumeFilePath, resumeFileData, os.ModePerm); err != nil {
+		http.Error(w, fmt.Sprintf("Ошибка сохранения файла: %v", err), http.StatusInternalServerError)
+		return
+	}
+
+	resumeData, err := ai.Request(string(resumeFileData))
+	if err != nil {
+		log.Println(err)
+		return
+	}
+
+	store := cookies.NewCookieManager(r)
+	role := store.Session.Values["role"].(string)
+	resumeId, err := manager.CreateResumeForUser(intId)
+	if err != nil {
+		log.Println(err)
+		return
+	}
+
+	err = saveResumeSkills(resumeData["hard_skills"], resumeData["soft_skills"], resumeId, manager, role)
+	if err != nil {
+		log.Println(err)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+	return
 }

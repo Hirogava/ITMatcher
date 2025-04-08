@@ -20,11 +20,13 @@ func Init() {
 	store.Options.HttpOnly = true
 	store.Options.Secure = true
 	store.Options.SameSite = http.SameSiteStrictMode
-
 }
 
 func NewCookieManager(r *http.Request) *Manager {
-	session, _ := store.Get(r, "session-name")
+	session, err := store.Get(r, "session-name")
+	if err != nil {
+		panic(err)
+	}
 	return &Manager{
 		Session: session,
 	}

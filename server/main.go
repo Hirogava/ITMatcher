@@ -88,15 +88,24 @@ func main() {
 	/*
 		API - HR
 	*/
-	r.Handle("/api/hr/resume", middleware.AuthRequired("hr",
+	r.Handle("/api/hr/resume/{id}", middleware.AuthRequired("hr",
 		http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			handlers.ResumeById(w, r, manager)
 		}))).Methods(http.MethodGet)
 
-	r.Handle("/api/hr/resumes", middleware.AuthRequired("hr",
+	r.Handle("/api/hr/resumes/{hr_id}", middleware.AuthRequired("hr",
 		http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			handlers.ResumesList(w, r, manager)
 		}))).Methods(http.MethodGet)
+
+	/*
+		API - Finder
+	*/
+
+	r.Handle("/api/finder/resume/{user_id}", middleware.AuthRequired("finder",
+		http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			handlers.SaveUserResume(w, r, manager)
+		}))).Methods(http.MethodPost)
 
 	/*
 		Server initialization
