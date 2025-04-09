@@ -10,6 +10,7 @@ body{
     font-family: 'Raleway', sans-serif !important;
     font-weight: 400 !important;
     height: 100% !important;
+    max-width: 100% !important;
 }
 
 a{
@@ -62,6 +63,15 @@ footer{
 }
 
 .button:hover{
+    filter: brightness(1.2);
+    transition: linear 0.05s;
+}
+
+.text-green{
+    color: #00FF00 !important;
+}
+
+.btn:hover{
     filter: brightness(1.2);
     transition: linear 0.05s;
 }
