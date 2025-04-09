@@ -129,7 +129,7 @@ type Resume struct {
 
 func (manager *Manager) GetResumeByIdForHr(resumeId int) (*Resume, error) {
 	var resume Resume
-	query := "SELECT id, finder_id, first_name, last_name, surname, email, phone_number, vacancy_id FROM resumes WHERE id = $1"
+	query := "SELECT finder_id, first_name, last_name, surname, email, phone_number, vacancy_id FROM resumes WHERE id = $1"
 	err := manager.Conn.QueryRow(query, resumeId).Scan(&resume.Id, &resume.FinderId, &resume.FirstName, &resume.LastName, &resume.Surname, &resume.Email, &resume.PhoneNumber, &resume.VacancyId)
 	if err != nil {
 		return nil, err

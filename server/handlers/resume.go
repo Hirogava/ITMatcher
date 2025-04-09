@@ -95,7 +95,7 @@ func ResumeById(w http.ResponseWriter, r *http.Request, manager *db.Manager) {
 	}
 
 	resumeMap := map[string]interface{}{
-		"id":           resume.Id,
+		"id":           resumeId,
 		"finder_id":    resume.FinderId,
 		"first_name":   resume.FirstName,
 		"last_name":    resume.LastName,
@@ -283,7 +283,7 @@ func saveResumeSkills(hardSkills []string, softSkills []string, resumeId int, ma
 			}
 		}
 		return nil
-	} else if role == "finder"{
+	} else if role == "user"{
 		for _, skill := range hardSkills {
 			hardSkillID, err := manager.GetHardSkillByName(skill)
 			if err != nil {
