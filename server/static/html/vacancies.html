@@ -9,12 +9,10 @@
 </head>
 <body>
     <div class="d-flex" style="min-height: 100vh;">
-        <!-- Кнопка для открытия бокового меню -->
         <button class="btn bg-white d-md-none text-decoration-underline" type="button" data-bs-toggle="offcanvas" data-bs-target="#offcanvasMenu" aria-controls="offcanvasMenu">
             Меню
         </button>
 
-        <!-- Боковое меню -->
         <nav class="bg-light border-end d-none d-md-block" style="width: 250px; min-height: 100vh;">
             <div class="d-flex flex-column p-3" style="height: 100%;">
                 <a class="navbar-brand color-primary fs-3 text-center" href="#">LOGO</a>
@@ -33,7 +31,6 @@
             </div>
         </nav>
 
-        <!-- Offcanvas меню для маленьких экранов -->
         <div class="offcanvas offcanvas-start p-4" tabindex="-1" id="offcanvasMenu" aria-labelledby="offcanvasMenuLabel">
             <a class="navbar-brand color-primary fs-3 text-center" href="#">LOGO</a>
                 <ul class="nav flex-column mb-auto">
@@ -50,13 +47,11 @@
                 </div>
         </div>
 
-        <!-- Основной контент -->
         <main class="flex-grow-1 d-flex mx-2 align-items-center justify-content-center">
             <div class="container">
                 <div class="main bg-white rounded p-4 shadow">
                     <div class="d-flex align-items-center mb-2">
                         <input type="text" class="form-control me-2" placeholder="Поиск вакансии" aria-label="Search">
-                        <!-- Кнопка справа -->
                         <div class="ms-auto mb-auto">
                             <a href="" class="btn rounded selected btn-lg ms-3 fw-regular text-white" style="width: auto;">Изменить</a>
                         </div>
