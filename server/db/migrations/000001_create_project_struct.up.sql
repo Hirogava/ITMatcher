@@ -7,7 +7,7 @@ CREATE TABLE "hr" (
 
 CREATE TABLE "vacancies" (
   "id" serial PRIMARY KEY,
-  "name" text
+  "name" text,
   "hr_id" integer
 );
 
