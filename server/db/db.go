@@ -47,12 +47,21 @@ func (manager *Manager) Register(table, email, password, username string) (int, 
 		return 0, err
 	}
 
-	query := fmt.Sprintf(`INSERT INTO %s (email, hash_password, username) VALUES ($1, $2, $3) RETURNING id`, table)
 	var id int
-	err = manager.Conn.QueryRow(query, email, hashedPassword, username).Scan(&id)
-	if err != nil {
-		return 0, err
+	if table == "hr" {
+		query := fmt.Sprintf(`INSERT INTO %s (email, hash_password, username) VALUES ($1, $2, $3) RETURNING id`, table)
+		err = manager.Conn.QueryRow(query, email, hashedPassword, username).Scan(&id)
+		if err != nil {
+			return 0, err
+		}
+	} else if table == "users" {
+		query := fmt.Sprintf(`INSERT INTO %s (email, hash_password) VALUES ($1, $2) RETURNING id`, table)
+		err = manager.Conn.QueryRow(query, email, hashedPassword).Scan(&id)
+		if err != nil {
+			return 0, err
+		}
 	}
+	
 
 	return id, nil
 }
@@ -60,11 +69,17 @@ func (manager *Manager) Register(table, email, password, username string) (int, 
 func (manager *Manager) Authenticate(table, email, password string) (int, string, error) {
 	var hash, username string
 	var id int
-	err := manager.Conn.QueryRow(fmt.Sprintf(`SELECT hash_password, username, id FROM %s WHERE email=$1`, table), email).Scan(&hash, &username, &id)
+	var err error
+
+	if table == "hr" {
+		err = manager.Conn.QueryRow(fmt.Sprintf(`SELECT hash_password, username, id FROM %s WHERE email=$1`, table), email).Scan(&hash, &username, &id)
+	} else if table == "users" {
+		err = manager.Conn.QueryRow(fmt.Sprintf(`SELECT hash_password, id FROM %s WHERE email=$1`, table), email).Scan(&hash, &id)
+	}
 	if err != nil {
 		return 0, "", err
 	}
-
+	
 	if err = bcrypt.CompareHashAndPassword([]byte(hash), []byte(password)); err != nil {
 		return 0, "", err
 	}
@@ -211,18 +226,59 @@ func (manager *Manager) GetHRIdByUsername(username string) (int, error) {
 /*
 Vacancy
 */
-func (manager *Manager) CreateVacancy(name string) (int, error) {
+
+type VacancySoftSkill struct {
+	Id        int
+	SkillName string
+}
+
+type VacancyHardSkill struct {
+	Id        int
+	SkillName string
+}
+
+type Vacancy struct {
+	Id        int
+	Name      string
+	HardSkills []VacancyHardSkill
+	SoftSkills []VacancySoftSkill
+}
+
+func (manager *Manager) CreateVacancy(name string, hr_id int) (int, error) {
 	var vacId int
-	err := manager.Conn.QueryRow("INSERT INTO vacancies (name) VALUES ($1) RETURNING id", name).Scan(&vacId)
+	err := manager.Conn.QueryRow("INSERT INTO vacancies (name, hr_id) VALUES ($1, $2) RETURNING id", name, hr_id).Scan(&vacId)
 	if err != nil {
 		return 0, err
 	}
 	return vacId, err
 }
 
-func (manager *Manager) GetVacancyIdByName(name string) (int, error) {
+func (manager *Manager) GetAllHrVacancies(hr_id int) ([]Vacancy, error) {
+	var vacancies []Vacancy
+	query := `SELECT v.id, v.name
+	FROM vacancies v
+	WHERE v.hr_id = $1`
+	rows, err := manager.Conn.Query(query, hr_id)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var vacancy Vacancy
+		err := rows.Scan(&vacancy.Id, &vacancy.Name)
+		if err != nil {
+				return nil, err
+		}
+
+ 
+	}
+}
+
+
+func (manager *Manager) GetVacancyIdByName(name string, hr_id int) (int, error) {
 	var vacId int
-	err := manager.Conn.QueryRow("SELECT id FROM vacancies WHERE name = $1", name).Scan(&vacId)
+	err := manager.Conn.QueryRow("SELECT id FROM vacancies WHERE name = $1 AND hr_id = $2", name, hr_id).Scan(&vacId)
 	if err != nil {
 		return 0, err
 	}
