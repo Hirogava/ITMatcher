@@ -151,6 +151,7 @@ func SendResume(w http.ResponseWriter, r *http.Request, manager *db.Manager) {
 		return
 	}
 
+	var vacancyData map[string][]string
 	vacId, err = manager.GetVacancyIdByName(finderData.VacancyName, hrId)
 	if err == sql.ErrNoRows {
 		vacId, err = manager.CreateVacancy(finderData.VacancyName, hrId)
@@ -182,14 +183,17 @@ func SendResume(w http.ResponseWriter, r *http.Request, manager *db.Manager) {
 			return
 		}
 
-		var vacancyData map[string][]string
 		vacancyData, err = ai.Request(string(vacancyFileData))
 		if err != nil {
 			http.Error(w, fmt.Sprintf("Ошибка AI модуля: %v", err), http.StatusInternalServerError)
 			return
 		}
 
-		saveVacancySkills(vacId, vacancyData["hard_skills"], vacancyData["soft_skills"], manager)
+		err = saveVacancySkills(vacId, vacancyData["hard_skills"], vacancyData["soft_skills"], manager)
+		if err != nil {
+			http.Error(w, fmt.Sprintf("Ошибка при записи в базу данных: %v", err), http.StatusInternalServerError)
+			return
+		}
 
 	} else if err != nil {
 		http.Error(w, fmt.Sprintf("Ошибка при получении данных из БД: %v", err), http.StatusInternalServerError)
@@ -228,11 +232,15 @@ func SendResume(w http.ResponseWriter, r *http.Request, manager *db.Manager) {
 
 	resumeData, err := ai.Request(string(resumeFileData))
 	if err != nil {
-		log.Println(err)
+		http.Error(w, fmt.Sprintf("Ошибка AI модуля: %v", err), http.StatusInternalServerError)
 		return
 	}
 
-	saveResumeSkills(resumeData["hard_skills"], resumeData["soft_skills"], resumeId, manager, "hr")
+	err = saveResumeSkills(resumeData["hard_skills"], resumeData["soft_skills"], resumeId, manager, "hr")
+	if err != nil {
+		http.Error(w, fmt.Sprintf("Ошибка при записи в базу данных: %v", err), http.StatusInternalServerError)
+		return
+	}
 
 	w.WriteHeader(http.StatusOK)
 	return
@@ -331,7 +339,7 @@ func saveResumeSkills(hardSkills []string, softSkills []string, resumeId int, ma
 	return fmt.Errorf("Неверно указана роль")
 }
 
-func saveVacancySkills(vacancyId int, hardSkills, softSkills []string, manager *db.Manager) {
+func saveVacancySkills(vacancyId int, hardSkills, softSkills []string, manager *db.Manager) error {
 	for _, skill := range hardSkills {
 		hardSkillID, err := manager.GetHardSkillByName(skill)
 		if err != nil {
@@ -339,17 +347,18 @@ func saveVacancySkills(vacancyId int, hardSkills, softSkills []string, manager *
 				hardSkillID, err = manager.CreateHardSkill(skill)
 				if err != nil {
 					log.Printf("Ошибка при добавлении hard_skill: %v", err)
-					continue
+					return err
 				}
 			} else {
 				log.Printf("Ошибка при проверке hard_skill: %v", err)
-				continue
+				return err
 			}
 		}
 
 		err = manager.CreateVacancyHardSkill(vacancyId, hardSkillID)
 		if err != nil {
 			log.Printf("Ошибка при добавлении в vacantion_hard_skill: %v", err)
+			return err
 		}
 	}
 
@@ -361,19 +370,21 @@ func saveVacancySkills(vacancyId int, hardSkills, softSkills []string, manager *
 				softSkillID, err = manager.CreateSoftSkill(skill)
 				if err != nil {
 					log.Printf("Ошибка при добавлении soft_skill: %v", err)
-					continue
+					return err
 				}
 			} else {
 				log.Printf("Ошибка при проверке soft_skill: %v", err)
-				continue
+				return err
 			}
 		}
 
 		err = manager.CreateVacancySoftSkill(vacancyId, softSkillID)
 		if err != nil {
 			log.Printf("Ошибка при добавлении в vacantion_soft_skill: %v", err)
+			return err
 		}
 	}
+	return nil
 }
 
 func SaveUserResume(w http.ResponseWriter, r *http.Request, manager *db.Manager) {
