@@ -12,7 +12,7 @@
         <div class="container">
             <nav class="navbar navbar-expand-lg" data-bs-theme="light">
                 <div class="container-fluid">
-                  <a class="navbar-brand color-primary fs-3" href="#">LOGO</a>
+                  <a class="navbar-brand color-primary fs-3" href="/">LOGO</a>
                   <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarColor03" aria-controls="navbarColor03" aria-expanded="false" aria-label="Toggle navigation">
                     <span class="navbar-toggler-icon"></span>
                   </button>
@@ -55,10 +55,10 @@
             <input type="password" id="password" name="password" class="form-control mb-3" placeholder="Пароль" required>
             
             <div class="d-flex justify-content-center mt-5 mb-2">
-                <a class="button rounded selected btn-lg ms-3 h-font fw-bold text-white" id="registerButton" onclick="register('hr')">Войти</a>
+                <a class="button rounded selected btn-lg ms-3 h-font fw-bold text-white" id="registerButton" onclick="login()">Войти</a>
             </div> 
             <div class="d-flex justify-content-center mb-3">
-                <p>Уже есть аккаунт? <a href="">Войти</a></p> 
+                <p>Еще нет аккаунта? <a href="/register">Зарегистрироваться</a></p> 
             </div> 
         </form>
 
@@ -94,7 +94,6 @@
     </footer>
     <script>
         const switchEl = document.getElementById('mySwitch');
-        const usernameField = document.getElementById('username');
         const usernameLabel = document.getElementById('username_label');
         let regType = "hr";
     
@@ -106,32 +105,28 @@
             const root = document.documentElement;
             if (switchEl.classList.contains('active')) {
                 root.style.setProperty('--primary-color', '#19C580');
-                usernameField.style.display = 'none';
-                usernameLabel.style.display = 'none';
-                regType = "user"
+                regType = "users"
 
             } else {
                 root.style.setProperty('--primary-color', '#377EF0');
-                usernameField.style.display = 'block';
-                usernameLabel.style.display = 'block';
                 regType = "hr"
             }
         });
 
-        async function register(role) {
-        const username = document.getElementById('username').value;
+        async function login() {
         const email = document.getElementById('email').value;
         const password = document.getElementById('password').value;
 
         const formData = {
-            username: role === "hr" ? username : null,
             email: email,
             password: password,
-            role: role
+            role: regType
         };
 
+        console.log(formData)
+
         try {
-            const response = await fetch('/api/register', {
+            const response = await fetch('/api/auth', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'

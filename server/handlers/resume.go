@@ -95,7 +95,7 @@ func ResumeById(w http.ResponseWriter, r *http.Request, manager *db.Manager) {
 	}
 
 	resumeMap := map[string]interface{}{
-		"id":           resume.Id,
+		"id":           resumeId,
 		"finder_id":    resume.FinderId,
 		"first_name":   resume.FirstName,
 		"last_name":    resume.LastName,
@@ -151,9 +151,9 @@ func SendResume(w http.ResponseWriter, r *http.Request, manager *db.Manager) {
 		return
 	}
 
-	vacId, err = manager.GetVacancyIdByName(finderData.VacancyName)
+	vacId, err = manager.GetVacancyIdByName(finderData.VacancyName, hrId)
 	if err == sql.ErrNoRows {
-		vacId, err = manager.CreateVacancy(finderData.VacancyName)
+		vacId, err = manager.CreateVacancy(finderData.VacancyName, hrId)
 		if err != nil {
 			http.Error(w, fmt.Sprintf("Ошибка при записи в базу данных: %v", err), http.StatusInternalServerError)
 			return
@@ -283,7 +283,7 @@ func saveResumeSkills(hardSkills []string, softSkills []string, resumeId int, ma
 			}
 		}
 		return nil
-	} else if role == "finder"{
+	} else if role == "users"{
 		for _, skill := range hardSkills {
 			hardSkillID, err := manager.GetHardSkillByName(skill)
 			if err != nil {

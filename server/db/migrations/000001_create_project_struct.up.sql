@@ -7,7 +7,8 @@ CREATE TABLE "hr" (
 
 CREATE TABLE "vacancies" (
   "id" serial PRIMARY KEY,
-  "name" text
+  "name" text,
+  "hr_id" integer
 );
 
 CREATE TABLE "vacantion_hard_skills" (
@@ -140,6 +141,8 @@ ALTER TABLE "resumes" ADD FOREIGN KEY ("vacancy_id") REFERENCES "vacancies" ("id
 ALTER TABLE "resumes" ADD FOREIGN KEY ("finder_id") REFERENCES "finders" ("id");
 
 ALTER TABLE "finders" ADD FOREIGN KEY ("hr_id") REFERENCES "hr" ("id");
+
+ALTER TABLE "vacancies" ADD FOREIGN KEY ("hr_id") REFERENCES "hr" ("id");
 
 ALTER TABLE "portfolio" ADD FOREIGN KEY ("finder_id") REFERENCES "finders" ("id");
 
