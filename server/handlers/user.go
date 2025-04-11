@@ -11,23 +11,23 @@ import (
 
 func Login(manager *db.Manager, w http.ResponseWriter, r *http.Request) {
 	if r.Header.Get("Content-Type") != "application/json" {
-        http.Error(w, "Content-Type должен быть application/json", http.StatusBadRequest)
-        return
-    }
+		http.Error(w, "Content-Type должен быть application/json", http.StatusBadRequest)
+		return
+	}
 
-    var requestData struct {
-        Role     string `json:"role"`
-        Email    string `json:"email"`
-        Password string `json:"password"`
-    }
+	var requestData struct {
+		Role     string `json:"role"`
+		Email    string `json:"email"`
+		Password string `json:"password"`
+	}
 
-    err := json.NewDecoder(r.Body).Decode(&requestData)
-    if err != nil {
-        http.Error(w, "Неверный формат JSON", http.StatusBadRequest)
-        return
-    }
+	err := json.NewDecoder(r.Body).Decode(&requestData)
+	if err != nil {
+		http.Error(w, "Неверный формат JSON", http.StatusBadRequest)
+		return
+	}
 
-    log.Println("role:", requestData.Role, "email:", requestData.Email, "password:", requestData.Password)
+	log.Println("role:", requestData.Role, "email:", requestData.Email, "password:", requestData.Password)
 
 	id, username, err := manager.Authenticate(requestData.Role, requestData.Email, requestData.Password)
 	if err != nil {
@@ -48,36 +48,36 @@ func Login(manager *db.Manager, w http.ResponseWriter, r *http.Request) {
 
 func Logout(w http.ResponseWriter, r *http.Request) {
 	store := cookies.NewCookieManager(r)
-    store.Session.Options.MaxAge = -1
-    if err := store.Session.Save(r, w); err != nil {
-        http.Error(w, "Ошибка выхода", http.StatusInternalServerError)
-        return
-    }
-    http.Redirect(w, r, "/", http.StatusSeeOther)
+	store.Session.Options.MaxAge = -1
+	if err := store.Session.Save(r, w); err != nil {
+		http.Error(w, "Ошибка выхода", http.StatusInternalServerError)
+		return
+	}
+	http.Redirect(w, r, "/", http.StatusSeeOther)
 }
 
 func Register(manager *db.Manager, w http.ResponseWriter, r *http.Request) {
 	if r.Header.Get("Content-Type") != "application/json" {
-        http.Error(w, "Content-Type должен быть application/json", http.StatusBadRequest)
-        return
-    }
+		http.Error(w, "Content-Type должен быть application/json", http.StatusBadRequest)
+		return
+	}
 
-    var requestData struct {
-        Role     string `json:"role"`
-        Email    string `json:"email"`
-        Username string `json:"username"`
-        Password string `json:"password"`
-    }
+	var requestData struct {
+		Role     string `json:"role"`
+		Email    string `json:"email"`
+		Username string `json:"username"`
+		Password string `json:"password"`
+	}
 
-    err := json.NewDecoder(r.Body).Decode(&requestData)
-    if err != nil {
-        http.Error(w, "Неверный формат JSON", http.StatusBadRequest)
-        return
-    }
+	err := json.NewDecoder(r.Body).Decode(&requestData)
+	if err != nil {
+		http.Error(w, "Неверный формат JSON", http.StatusBadRequest)
+		return
+	}
 
-    log.Println("role:", requestData.Role, "email:", requestData.Email, "username:", requestData.Username, "password:", requestData.Password)
+	log.Println("role:", requestData.Role, "email:", requestData.Email, "username:", requestData.Username, "password:", requestData.Password)
 
-	id, err := manager.Register(requestData.Role, requestData.Email, requestData.Username, requestData.Password)
+	id, err := manager.Register(requestData.Role, requestData.Email, requestData.Password, requestData.Username)
 	if err != nil {
 		http.Error(w, fmt.Sprintf("Failed: %v", err), http.StatusUnauthorized)
 		return
