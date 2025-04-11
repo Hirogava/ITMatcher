@@ -127,21 +127,20 @@
 
         try {
             const response = await fetch('/api/auth', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify(formData)
-            });
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(formData)
+                });
 
             if (response.ok) {
                 const result = await response.json();
-                console.log('Успешная регистрация:', result);
-                alert('Регистрация прошла успешно!');
+                console.log('Успешный вход:', result);
+                alert('Вход прошел успешно!');
+                window.location.href = "/hracc";
             } else {
                 const error = await response.json();
-                console.error('Ошибка регистрации:', error);
-                alert('Ошибка регистрации: ' + error.message);
+                console.error('Ошибка входа:', error);
+                alert('Ошибка входа: ' + error.message);
             }
         } catch (err) {
             console.error('Ошибка сети:', err);

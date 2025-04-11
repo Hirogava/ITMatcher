@@ -2,6 +2,7 @@ package routes
 
 import (
 	"gaspr/db"
+	middleware "gaspr/handlers/middlewares"
 	"html/template"
 	"net/http"
 
@@ -47,22 +48,22 @@ func RegisterRoute(r *mux.Router) {
 }
 
 func FindersRoute(r *mux.Router) {
-	r.HandleFunc("/finders", func(w http.ResponseWriter, r *http.Request) {
-		tmpl := template.Must(template.ParseFiles("./static/html/finders.html"))
-		tmpl.Execute(w, nil)
-	})
-}
+	r.Handle("/finders", middleware.AuthRequired("hr",
+		http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			tmpl := template.Must(template.ParseFiles("./static/html/finders.html"))
+			tmpl.Execute(w, nil)
+	})))}
 
 func HrAccRoute(r *mux.Router) {
-	r.HandleFunc("/hracc", func(w http.ResponseWriter, r *http.Request) {
-		tmpl := template.Must(template.ParseFiles("./static/html/hr_account.html"))
-		tmpl.Execute(w, nil)
-	})
-}
+	r.Handle("/hracc", middleware.AuthRequired("hr",
+		http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			tmpl := template.Must(template.ParseFiles("./static/html/hr_account.html"))
+			tmpl.Execute(w, nil)
+	})))}
 
 func VacanciesRoute(r *mux.Router) {
-	r.HandleFunc("/vacancies", func(w http.ResponseWriter, r *http.Request) {
-		tmpl := template.Must(template.ParseFiles("./static/html/vacancies.html"))
-		tmpl.Execute(w, nil)
-	})
-}
+	r.Handle("/vacancies", middleware.AuthRequired("hr",
+		http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			tmpl := template.Must(template.ParseFiles("./static/html/vacancies.html"))
+			tmpl.Execute(w, nil)
+	})))}

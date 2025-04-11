@@ -5,8 +5,10 @@ import (
 	"encoding/json"
 	"fmt"
 	"gaspr/db"
+	"gaspr/models"
 	"gaspr/services/ai"
 	"gaspr/services/cookies"
+	"gaspr/services/resumeanalysis"
 	"io"
 	"log"
 	"net/http"
@@ -152,6 +154,8 @@ func SendResume(w http.ResponseWriter, r *http.Request, manager *db.Manager) {
 	}
 
 	var vacancyData map[string][]string
+	var vacSkills models.VacancySkills
+	var resSkills models.ResumeSkills
 	vacId, err = manager.GetVacancyIdByName(finderData.VacancyName, hrId)
 	if err == sql.ErrNoRows {
 		vacId, err = manager.CreateVacancy(finderData.VacancyName, hrId)
@@ -189,7 +193,7 @@ func SendResume(w http.ResponseWriter, r *http.Request, manager *db.Manager) {
 			return
 		}
 
-		err = saveVacancySkills(vacId, vacancyData["hard_skills"], vacancyData["soft_skills"], manager)
+		vacSkills, err = saveVacancySkills(vacId, vacancyData["hard_skills"], vacancyData["soft_skills"], manager)
 		if err != nil {
 			http.Error(w, fmt.Sprintf("Ошибка при записи в базу данных: %v", err), http.StatusInternalServerError)
 			return
@@ -236,7 +240,19 @@ func SendResume(w http.ResponseWriter, r *http.Request, manager *db.Manager) {
 		return
 	}
 
-	err = saveResumeSkills(resumeData["hard_skills"], resumeData["soft_skills"], resumeId, manager, "hr")
+	resSkills, err = saveResumeSkills(resumeData["hard_skills"], resumeData["soft_skills"], resumeId, manager, "hr")
+	if err != nil {
+		http.Error(w, fmt.Sprintf("Ошибка при записи в базу данных: %v", err), http.StatusInternalServerError)
+		return
+	}
+
+	analyzedSkills, err := resumeanalysis.AnalizResumeSkills(resSkills, vacSkills)
+	if err != nil {
+		http.Error(w, fmt.Sprintf("Ошибка при анализе резюме: %v", err), http.StatusInternalServerError)
+		return
+	}
+	
+	err = manager.SaveAnalyzedDataForHr(resumeId, vacId, analyzedSkills)
 	if err != nil {
 		http.Error(w, fmt.Sprintf("Ошибка при записи в базу данных: %v", err), http.StatusInternalServerError)
 		return
@@ -246,8 +262,11 @@ func SendResume(w http.ResponseWriter, r *http.Request, manager *db.Manager) {
 	return
 }
 
-func saveResumeSkills(hardSkills []string, softSkills []string, resumeId int, manager *db.Manager, role string) error {
-	if role == "hr"{
+func saveResumeSkills(hardSkills []string, softSkills []string, resumeId int, manager *db.Manager, role string) (models.ResumeSkills, error) {
+	var result models.ResumeSkills
+
+	switch role {
+	case "hr":
 		for _, skill := range hardSkills {
 			hardSkillID, err := manager.GetHardSkillByName(skill)
 			if err != nil {
@@ -262,15 +281,18 @@ func saveResumeSkills(hardSkills []string, softSkills []string, resumeId int, ma
 					continue
 				}
 			}
-
 			err = manager.CreateResumeHardSkill(resumeId, hardSkillID)
 			if err != nil {
-				log.Printf("Ошибка при добавлении в resume_hard_skill: %v", err)
+				log.Printf("Ошибка при добавлении hard_skill: %v", err)
+				continue
 			}
+			result.HardSkills = append(result.HardSkills, models.ResumeHardSkill{
+				Id:        hardSkillID,
+				SkillName: skill,
+			})
 		}
 
 		for _, skill := range softSkills {
-			var softSkillID int
 			softSkillID, err := manager.GetSoftSkillByName(skill)
 			if err != nil {
 				if err == sql.ErrNoRows {
@@ -284,14 +306,19 @@ func saveResumeSkills(hardSkills []string, softSkills []string, resumeId int, ma
 					continue
 				}
 			}
-
 			err = manager.CreateResumeSoftSkill(resumeId, softSkillID)
 			if err != nil {
-				log.Printf("Ошибка при добавлении в resume_soft_skill: %v", err)
+				log.Printf("Ошибка при добавлении soft_skill: %v", err)
+				continue
 			}
+			result.SoftSkills = append(result.SoftSkills, models.ResumeSoftSkill{
+				Id:        softSkillID,
+				SkillName: skill,
+			})
 		}
-		return nil
-	} else if role == "users"{
+		return result, nil
+
+	case "users":
 		for _, skill := range hardSkills {
 			hardSkillID, err := manager.GetHardSkillByName(skill)
 			if err != nil {
@@ -306,15 +333,18 @@ func saveResumeSkills(hardSkills []string, softSkills []string, resumeId int, ma
 					continue
 				}
 			}
-
 			err = manager.CreateUserResumeHardSkill(resumeId, hardSkillID)
 			if err != nil {
-				log.Printf("Ошибка при добавлении в resume_hard_skill: %v", err)
+				log.Printf("Ошибка при добавлении hard_skill: %v", err)
+				continue
 			}
+			result.HardSkills = append(result.HardSkills, models.ResumeHardSkill{
+				Id:        hardSkillID,
+				SkillName: skill,
+			})
 		}
 
 		for _, skill := range softSkills {
-			var softSkillID int
 			softSkillID, err := manager.GetSoftSkillByName(skill)
 			if err != nil {
 				if err == sql.ErrNoRows {
@@ -328,18 +358,27 @@ func saveResumeSkills(hardSkills []string, softSkills []string, resumeId int, ma
 					continue
 				}
 			}
-
 			err = manager.CreateUserResumeSoftSkill(resumeId, softSkillID)
 			if err != nil {
-				log.Printf("Ошибка при добавлении в resume_soft_skill: %v", err)
+				log.Printf("Ошибка при добавлении soft_skill: %v", err)
+				continue
 			}
+			result.SoftSkills = append(result.SoftSkills, models.ResumeSoftSkill{
+				Id:        softSkillID,
+				SkillName: skill,
+			})
 		}
-		return nil
+		return result, nil
+
+	default:
+		return result, fmt.Errorf("Неверно указана роль: %s", role)
 	}
-	return fmt.Errorf("Неверно указана роль")
 }
 
-func saveVacancySkills(vacancyId int, hardSkills, softSkills []string, manager *db.Manager) error {
+
+func saveVacancySkills(vacancyId int, hardSkills, softSkills []string, manager *db.Manager) (models.VacancySkills, error) {
+	var result models.VacancySkills
+
 	for _, skill := range hardSkills {
 		hardSkillID, err := manager.GetHardSkillByName(skill)
 		if err != nil {
@@ -347,45 +386,46 @@ func saveVacancySkills(vacancyId int, hardSkills, softSkills []string, manager *
 				hardSkillID, err = manager.CreateHardSkill(skill)
 				if err != nil {
 					log.Printf("Ошибка при добавлении hard_skill: %v", err)
-					return err
+					continue
 				}
 			} else {
 				log.Printf("Ошибка при проверке hard_skill: %v", err)
-				return err
+				continue
 			}
 		}
 
-		err = manager.CreateVacancyHardSkill(vacancyId, hardSkillID)
-		if err != nil {
-			log.Printf("Ошибка при добавлении в vacantion_hard_skill: %v", err)
-			return err
-		}
+		_ = manager.CreateVacancyHardSkill(vacancyId, hardSkillID)
+		result.HardSkills = append(result.HardSkills, models.VacancyHardSkill{
+			Id:        hardSkillID,
+			SkillName: skill,
+		})
 	}
 
 	for _, skill := range softSkills {
-		var softSkillID int
 		softSkillID, err := manager.GetSoftSkillByName(skill)
 		if err != nil {
 			if err == sql.ErrNoRows {
 				softSkillID, err = manager.CreateSoftSkill(skill)
 				if err != nil {
 					log.Printf("Ошибка при добавлении soft_skill: %v", err)
-					return err
+					continue
 				}
 			} else {
 				log.Printf("Ошибка при проверке soft_skill: %v", err)
-				return err
+				continue
 			}
 		}
 
-		err = manager.CreateVacancySoftSkill(vacancyId, softSkillID)
-		if err != nil {
-			log.Printf("Ошибка при добавлении в vacantion_soft_skill: %v", err)
-			return err
-		}
+		_ = manager.CreateVacancySoftSkill(vacancyId, softSkillID)
+		result.SoftSkills = append(result.SoftSkills, models.VacancySoftSkill{
+			Id:        softSkillID,
+			SkillName: skill,
+		})
 	}
-	return nil
+
+	return result, nil
 }
+
 
 func SaveUserResume(w http.ResponseWriter, r *http.Request, manager *db.Manager) {
 	vars := mux.Vars(r)
@@ -434,7 +474,7 @@ func SaveUserResume(w http.ResponseWriter, r *http.Request, manager *db.Manager)
 		return
 	}
 
-	err = saveResumeSkills(resumeData["hard_skills"], resumeData["soft_skills"], resumeId, manager, role)
+	_, err = saveResumeSkills(resumeData["hard_skills"], resumeData["soft_skills"], resumeId, manager, role)
 	if err != nil {
 		log.Println(err)
 		return

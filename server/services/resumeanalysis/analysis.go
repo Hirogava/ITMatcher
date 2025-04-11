@@ -1,48 +1,77 @@
 package resumeanalysis
 
 import (
+	"strings"
+
 	"gaspr/models"
+
+	"github.com/agnivade/levenshtein"
 )
 
-func AnalizResumeSkills(resskills models.ResumeSkills, vacskills models.VacancySkills) models.FinalSkills {
-	var finalSkills models.FinalSkills
-	softResumeSkills := resskills.SoftSkills
-	hardResumeSkills := resskills.HardSkills
-	softVacancySkills := vacskills.SoftSkills
-	hardVacancySkills := vacskills.HardSkills
-	count_soft_resskills := 0
-	count_hard_resskills := 0
-	for _, soft_resskill := range softResumeSkills {
-		for _, soft_vacskill := range softVacancySkills {
-			if soft_resskill == soft_vacskill {
-				finalSkills.CoincidenceSoft = append(finalSkills.CoincidenceSoft, soft_vacskill)
-				count_soft_resskills++
-				break
-			}
-			finalSkills.MismatchSoft = append(finalSkills.MismatchSoft, soft_vacskill)
-		}
-	}
-	for _, hard_resskill := range hardResumeSkills {
-		for _, hard_vacskill := range hardVacancySkills {
-			if hard_resskill == hard_vacskill {
-				finalSkills.CoincidenceHard = append(finalSkills.CoincidenceHard, hard_vacskill)
-				count_hard_resskills++
-				break
-			}
-			finalSkills.MismatchHard = append(finalSkills.MismatchHard, hard_vacskill)
-		}
-	}
-	softScore := float64(count_soft_resskills) / float64(len(softVacancySkills)) * 100
-	hardScore := float64(count_hard_resskills) / float64(len(hardVacancySkills)) * 100
+const maxDistance = 2
 
-	if len(hardVacancySkills) == 0 {
-		finalSkills.Percent = int(softScore)
-		return finalSkills
-	} else if len(softVacancySkills) == 0 {
-		finalSkills.Percent = int(hardScore)
-		return finalSkills
-	} else {
-		finalSkills.Percent = int((softScore + hardScore) / 2)
-		return finalSkills
+func skillMatch(a, b string) bool {
+	a = strings.ToLower(strings.TrimSpace(a))
+	b = strings.ToLower(strings.TrimSpace(b))
+	if a == b {
+		return true
 	}
+	distance := levenshtein.ComputeDistance(a, b)
+	return distance <= maxDistance
+}
+
+func AnalizResumeSkills(resskills models.ResumeSkills, vacskills models.VacancySkills) (models.FinalSkills, error) {
+	var finalSkills models.FinalSkills
+
+	countSoft := 0
+	countHard := 0
+
+	for _, softVacSkill := range vacskills.SoftSkills {
+		found := false
+		for _, softResSkill := range resskills.SoftSkills {
+			if skillMatch(softResSkill.SkillName, softVacSkill.SkillName) {
+				finalSkills.CoincidenceSoft = append(finalSkills.CoincidenceSoft, softVacSkill)
+				countSoft++
+				found = true
+				break
+			}
+		}
+		if !found {
+			finalSkills.MismatchSoft = append(finalSkills.MismatchSoft, softVacSkill)
+		}
+	}
+
+	for _, hardVacSkill := range vacskills.HardSkills {
+		found := false
+		for _, hardResSkill := range resskills.HardSkills {
+			if skillMatch(hardResSkill.SkillName, hardVacSkill.SkillName) {
+				finalSkills.CoincidenceHard = append(finalSkills.CoincidenceHard, hardVacSkill)
+				countHard++
+				found = true
+				break
+			}
+		}
+		if !found {
+			finalSkills.MismatchHard = append(finalSkills.MismatchHard, hardVacSkill)
+		}
+	}
+
+	var softScore, hardScore float64
+	if len(vacskills.SoftSkills) > 0 {
+		softScore = float64(countSoft) / float64(len(vacskills.SoftSkills)) * 100
+	}
+	if len(vacskills.HardSkills) > 0 {
+		hardScore = float64(countHard) / float64(len(vacskills.HardSkills)) * 100
+	}
+
+	switch {
+	case len(vacskills.HardSkills) == 0:
+		finalSkills.Percent = int(softScore)
+	case len(vacskills.SoftSkills) == 0:
+		finalSkills.Percent = int(hardScore)
+	default:
+		finalSkills.Percent = int((softScore + hardScore) / 2)
+	}
+
+	return finalSkills, nil
 }

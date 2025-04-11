@@ -32,7 +32,7 @@ func ApiAuthRoute(r *mux.Router, manager *db.Manager) {
 func ApiLogoutRoute(r *mux.Router) {
 	r.Handle("/api/logout", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		handlers.Logout(w, r)
-	})).Methods(http.MethodPost)
+	})).Methods(http.MethodGet)
 }
 
 /*

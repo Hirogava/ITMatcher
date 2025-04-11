@@ -1,19 +1,39 @@
 package models
 
+type ResumeSoftSkill struct {
+	Id        int
+	SkillName string
+}
+
+type ResumeHardSkill struct {
+	Id        int
+	SkillName string
+}
+
+type VacancySoftSkill struct {
+	Id        int
+	SkillName string
+}
+
+type VacancyHardSkill struct {
+	Id        int
+	SkillName string
+}
+
 type ResumeSkills struct {
-	HardSkills []string
-	SoftSkills []string
+	HardSkills []ResumeHardSkill
+	SoftSkills []ResumeSoftSkill
 }
 
 type VacancySkills struct {
-	HardSkills []string
-	SoftSkills []string
+	HardSkills []VacancyHardSkill
+	SoftSkills []VacancySoftSkill
 }
 
 type FinalSkills struct {
 	Percent int
-	CoincidenceHard []string
-	CoincidenceSoft []string
-	MismatchHard []string
-	MismatchSoft []string
+	CoincidenceHard []VacancyHardSkill
+	CoincidenceSoft []VacancySoftSkill
+	MismatchHard []VacancyHardSkill
+	MismatchSoft []VacancySoftSkill
 }

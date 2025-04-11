@@ -3,6 +3,7 @@ package db
 import (
 	"database/sql"
 	"fmt"
+	"gaspr/models"
 	"sync"
 
 	"golang.org/x/crypto/bcrypt"
@@ -179,6 +180,46 @@ func (manager *Manager) GetAllResumesForHr(hr_id int) ([]Resume, error) {
 
 	return resumes, nil
 }
+
+func (manager *Manager) SaveAnalyzedDataForHr(resumeId int, vacancyId int, analyzedSkills models.FinalSkills) (error) {
+	var id int
+    query := "INSERT INTO hr_skill_analysis (resume_id, vacancy_id, percent_match) VALUES ($1, $2, $3) RETURNING id"
+	err := manager.Conn.QueryRow(query, resumeId, vacancyId, analyzedSkills.Percent).Scan(&id)
+	if err != nil {
+		return err
+	}
+
+	err = manager.insertAnalyzedSkills("hr_analysis_hard_skills", id, analyzedSkills, true, "hard")
+	if err != nil {
+		return err
+	}
+	err = manager.insertAnalyzedSkills("hr_analysis_soft_skills", id, analyzedSkills, true, "soft")
+	if err != nil {
+		return err
+	}
+	err = manager.insertAnalyzedSkills("hr_analysis_hard_skills", id, analyzedSkills, false, "hard")
+	if err != nil {
+		return err
+	}
+	err = manager.insertAnalyzedSkills("hr_analysis_soft_skills", id, analyzedSkills, false, "soft")
+	if err != nil {
+		return err
+	}
+ 
+	return nil
+}
+
+func (manager *Manager) insertAnalyzedSkills(table string, id int, analyzedSkills models.FinalSkills, matched bool, skillType string) error {
+	for _, hardSkill := range analyzedSkills.CoincidenceHard {
+		query := fmt.Sprintf("INSERT INTO %s (analysis_id, %s_skill_id, matched) VALUES ($1, $2, $3)", table, skillType)
+		_, err := manager.Conn.Exec(query, id, hardSkill, true)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
 
 func (manager *Manager) CreateResumeForHr(finderId int, firstName, lastName, surName, email, phoneNumber string, vacancyId int) (int, error) {
 	var resumeId int
