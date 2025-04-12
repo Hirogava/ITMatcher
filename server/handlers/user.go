@@ -38,6 +38,7 @@ func Login(manager *db.Manager, w http.ResponseWriter, r *http.Request) {
 	store := cookies.NewCookieManager(r)
 	store.Session.Values["role"] = requestData.Role
 	store.Session.Values["username"] = username
+	store.Session.Values["email"] = requestData.Email
 	store.Session.Values["user_id"] = id
 
 	w.Header().Set("Content-Type", "application/json")
@@ -86,6 +87,7 @@ func Register(manager *db.Manager, w http.ResponseWriter, r *http.Request) {
 	store := cookies.NewCookieManager(r)
 	store.Session.Values["role"] = requestData.Role
 	store.Session.Values["username"] = requestData.Username
+	store.Session.Values["email"] = requestData.Email
 	store.Session.Values["user_id"] = id
 
 	w.Header().Set("Content-Type", "application/json")
