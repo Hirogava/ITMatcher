@@ -251,7 +251,7 @@ func SendResume(w http.ResponseWriter, r *http.Request, manager *db.Manager) {
 		http.Error(w, fmt.Sprintf("Ошибка при анализе резюме: %v", err), http.StatusInternalServerError)
 		return
 	}
-	
+
 	err = manager.SaveAnalyzedDataForHr(resumeId, vacId, analyzedSkills)
 	if err != nil {
 		http.Error(w, fmt.Sprintf("Ошибка при записи в базу данных: %v", err), http.StatusInternalServerError)
@@ -375,7 +375,6 @@ func saveResumeSkills(hardSkills []string, softSkills []string, resumeId int, ma
 	}
 }
 
-
 func saveVacancySkills(vacancyId int, hardSkills, softSkills []string, manager *db.Manager) (models.VacancySkills, error) {
 	var result models.VacancySkills
 
@@ -426,7 +425,6 @@ func saveVacancySkills(vacancyId int, hardSkills, softSkills []string, manager *
 	return result, nil
 }
 
-
 func SaveUserResume(w http.ResponseWriter, r *http.Request, manager *db.Manager) {
 	vars := mux.Vars(r)
 	user_id := vars["user_id"]
@@ -444,8 +442,8 @@ func SaveUserResume(w http.ResponseWriter, r *http.Request, manager *db.Manager)
 
 	resumeFileData, err := io.ReadAll(resumeFile)
 	if err != nil {
-        http.Error(w, fmt.Sprintf("Ошибка при чтении файла: %v", err), http.StatusBadRequest)
-        return
+		http.Error(w, fmt.Sprintf("Ошибка при чтении файла: %v", err), http.StatusBadRequest)
+		return
 	}
 
 	resumeDir := fmt.Sprintf("user/%d/resume", intId)

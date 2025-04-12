@@ -62,7 +62,6 @@ func (manager *Manager) Register(table, email, password, username string) (int, 
 			return 0, err
 		}
 	}
-	
 
 	return id, nil
 }
@@ -80,7 +79,7 @@ func (manager *Manager) Authenticate(table, email, password string) (int, string
 	if err != nil {
 		return 0, "", err
 	}
-	
+
 	if err = bcrypt.CompareHashAndPassword([]byte(hash), []byte(password)); err != nil {
 		return 0, "", err
 	}
@@ -181,9 +180,9 @@ func (manager *Manager) GetAllResumesForHr(hr_id int) ([]Resume, error) {
 	return resumes, nil
 }
 
-func (manager *Manager) SaveAnalyzedDataForHr(resumeId int, vacancyId int, analyzedSkills models.FinalSkills) (error) {
+func (manager *Manager) SaveAnalyzedDataForHr(resumeId int, vacancyId int, analyzedSkills models.FinalSkills) error {
 	var id int
-    query := "INSERT INTO hr_skill_analysis (resume_id, vacancy_id, percent_match) VALUES ($1, $2, $3) RETURNING id"
+	query := "INSERT INTO hr_skill_analysis (resume_id, vacancy_id, percent_match) VALUES ($1, $2, $3) RETURNING id"
 	err := manager.Conn.QueryRow(query, resumeId, vacancyId, analyzedSkills.Percent).Scan(&id)
 	if err != nil {
 		return err
@@ -205,7 +204,7 @@ func (manager *Manager) SaveAnalyzedDataForHr(resumeId int, vacancyId int, analy
 	if err != nil {
 		return err
 	}
- 
+
 	return nil
 }
 
@@ -219,7 +218,6 @@ func (manager *Manager) insertAnalyzedSkills(table string, id int, analyzedSkill
 	}
 	return nil
 }
-
 
 func (manager *Manager) CreateResumeForHr(finderId int, firstName, lastName, surName, email, phoneNumber string, vacancyId int) (int, error) {
 	var resumeId int
@@ -257,9 +255,9 @@ HR
 */
 
 type HR struct {
-	ID int
-	Username  string
-	Email string
+	ID       int
+	Username string
+	Email    string
 }
 
 func (manager *Manager) GetHrInfoById(hr_id int) (HR, error) {
@@ -295,8 +293,8 @@ type VacancyHardSkill struct {
 }
 
 type Vacancy struct {
-	Id        int
-	Name      string
+	Id         int
+	Name       string
 	HardSkills []VacancyHardSkill
 	SoftSkills []VacancySoftSkill
 }
@@ -389,7 +387,7 @@ func (manager *Manager) GetVacancySkills(vacancyId int) ([]VacancyHardSkill, []V
 	var hardSkills []VacancyHardSkill
 	var softSkills []VacancySoftSkill
 
-	query := `SELECT hs.id, hs.name
+	query := `SELECT hs.id, hs.hard_skill
 	FROM vacantion_hard_skills vhs
 	JOIN hard_skills hs ON vhs.hard_skill_id = hs.id
 	WHERE vhs.vacancy_id = $1`
@@ -409,7 +407,7 @@ func (manager *Manager) GetVacancySkills(vacancyId int) ([]VacancyHardSkill, []V
 		hardSkills = append(hardSkills, hardSkill)
 	}
 
-	query = `SELECT ss.id, ss.name
+	query = `SELECT ss.id, ss.soft_skill
 	FROM vacantion_soft_skills vss
 	JOIN soft_skills ss ON vss.soft_skill_id = ss.id
 	WHERE vss.vacancy_id = $1`
@@ -431,8 +429,6 @@ func (manager *Manager) GetVacancySkills(vacancyId int) ([]VacancyHardSkill, []V
 
 	return hardSkills, softSkills, nil
 }
-
-
 
 /*
 Finder

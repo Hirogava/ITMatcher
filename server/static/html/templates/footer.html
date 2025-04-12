@@ -1,0 +1,71 @@
+{{define "footer"}}
+<footer>
+    <div class="container">
+        <div class="row d-flex justify-content-center g-5">
+            <div class="col-sm-3">
+                <h6 class="text-center footer-h">Рекрутерам</h6>
+                <ul>
+                    <li><a href="/login">Вход</a></li>
+                    <li><a href="">Возможности</a></li>
+                </ul>
+            </div>
+            <div class="col-sm-3">
+                <h6 class="text-center footer-h">Соискателям</h6>
+                <ul>
+                    <li><a href="/login">Вход</a></li>
+                    <li><a href="">Возможности</a></li>
+                </ul>
+            </div>
+            <div class="col-sm-3">
+                <h6 class="text-center footer-h">О нас</h6>
+                <ul>
+                    <li><a href="">tg</a></li>
+                </ul>
+            </div>
+            
+        </div>
+    </div>
+</footer>
+
+<script>
+    const switchEl = document.getElementById('mySwitch');
+
+    switchEl.addEventListener('click', () => {
+        switchEl.classList.toggle('active');
+
+        const root = document.documentElement;
+        if (switchEl.classList.contains('active')) {
+            root.style.setProperty('--primary-color', '#19C580');
+
+            const paragraphs = document.getElementsByName('forwho');
+            paragraphs.forEach((paragraph, index) => {
+                const textElement = paragraph.nextElementSibling;
+                textElement.classList.add('hidden');
+                setTimeout(() => {
+                    if (index === 0) textElement.textContent = 'Импортируйте свое резюме через личный кабинет в любом формате';
+                    if (index === 1) textElement.textContent = 'Алгоритмы машинного обучения выделят из резюме самое главное, сравнят его с актуальными требованиями вакансий';
+                    if (index === 2) textElement.textContent = 'Рекомендательная система укажет, какие навыки необходимо вам освоить для получения оффера мечты';
+                    textElement.classList.remove('hidden');
+                }, 150);
+            });
+        } else {
+            root.style.setProperty('--primary-color', '#377EF0');
+
+            const paragraphs = document.getElementsByName('forwho');
+            paragraphs.forEach((paragraph, index) => {
+                const textElement = paragraph.nextElementSibling;
+                textElement.classList.add('hidden');
+                setTimeout(() => {
+                    if (index === 0) textElement.textContent = 'Автоматизированный анализ сокращает рутинные задачи рекрутеров и помогает кандидатам быстрее находить работу';
+                    if (index === 1) textElement.textContent = 'Алгоритмы машинного обучения выделят из резюме самое главное, сравнят его с потребностями вакансии и карты компетенций';
+                    if (index === 2) textElement.textContent = 'Сортировка кандидатов по совпадению компетенций соискателя и требованиям вакансии';
+                    textElement.classList.remove('hidden');
+                }, 150);
+            });
+        }
+    });
+</script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.5/dist/js/bootstrap.bundle.min.js" integrity="sha384-k6d4wzSIapyDyv1kpU366/PK5hCdSbCRGRCMv+eplOQJWyd1fbcAu9OCUj5zNLiq" crossorigin="anonymous"></script>
+</body>
+</html>
+{{end}}

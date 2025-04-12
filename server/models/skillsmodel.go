@@ -31,9 +31,9 @@ type VacancySkills struct {
 }
 
 type FinalSkills struct {
-	Percent int
+	Percent         int
 	CoincidenceHard []VacancyHardSkill
 	CoincidenceSoft []VacancySoftSkill
-	MismatchHard []VacancyHardSkill
-	MismatchSoft []VacancySoftSkill
+	MismatchHard    []VacancyHardSkill
+	MismatchSoft    []VacancySoftSkill
 }
