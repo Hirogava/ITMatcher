@@ -39,6 +39,6 @@ type FinalSkills struct {
 }
 
 type AnalyzedSkills struct {
-	Mismatch []string
-	Coincide []string
+	Mismatch []string `json:"mismatch"`
+	Coincide []string `json:"coincide"`
 }
