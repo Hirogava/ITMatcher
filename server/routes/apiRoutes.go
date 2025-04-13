@@ -95,4 +95,10 @@ func ApiRoutes(r *mux.Router, manager *db.Manager) {
 		http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			handlers.SaveUserResume(w, r, manager)
 		}))).Methods(http.MethodPost)
+	
+	r.Handle("/api/hr/get_finder/{finder_id}/{vacancy_id}", middleware.AuthRequired("hr",
+	http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		handlers.GetAnalizedResume(w, r, manager)
+	}))).Methods(http.MethodGet)
+
 }
