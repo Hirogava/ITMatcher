@@ -28,6 +28,8 @@ func Init(r *mux.Router, manager *db.Manager) {
 	ApiGetAllResumesRoute(r, manager)
 	ApiNLPRoute(r)
 	ApiSaveUserSkillsRoute(r, manager)
+	ApiAddFinder(r, manager)
+	ApiGetFinderByIDRoute(r, manager)
 }
 
 func join(elements []models.VacancyHardSkill) string {

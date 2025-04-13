@@ -123,7 +123,6 @@ func GetAnalizedResume(w http.ResponseWriter, r *http.Request, manager *db.Manag
 	intFinId, err := strconv.Atoi(finId)
 	if err != nil {
 		w.Write([]byte("Error: " + err.Error()))
-
 		return
 	}
 	intVacId, err := strconv.Atoi(vacId)
