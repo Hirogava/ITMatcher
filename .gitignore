@@ -4,3 +4,4 @@ aiData
 .idea
 /server/finder/
 /server/vacancy/
+.DS_Store
