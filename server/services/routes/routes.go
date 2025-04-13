@@ -92,9 +92,31 @@ func FindersRoute(r *mux.Router, manager *db.Manager) {
 				return
 			}
 
+			findResumes, err := manager.GetAllResumesForHr(hrAccount.ID)
+			if err != nil {
+				fmt.Println("Ошибка при получении резюме:", err)
+				http.Error(w, "Не удалось получить резюме", http.StatusUnauthorized)
+				return
+			}
+
+			findersData := make([]map[string]interface{}, len(findResumes))
+			for i, resume := range findResumes {
+				vacancy, err := manager.GetVacancyByIdForHr(resume.VacancyId)
+				if err != nil {
+					http.Error(w, "Не удалось получить вакансию для резюме", http.StatusInternalServerError)
+					return
+				}
+
+				// Добавляем словарь в массив
+				findersData[i] = map[string]interface{}{
+					"resume":  resume,
+					"vacancy": vacancy,
+				}
+			}
+
 			data := map[string]interface{}{
 				"pageTitle":    "Вакансии",
-				"finders":      [0]string{},
+				"finders":      findersData,
 				"current_page": "finders",
 			}
 
