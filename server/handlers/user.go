@@ -40,9 +40,9 @@ func Login(manager *db.Manager, w http.ResponseWriter, r *http.Request) {
 	store.Session.Values["username"] = username
 	store.Session.Values["email"] = requestData.Email
 	store.Session.Values["user_id"] = id
+	store.Session.Save(r, w)
 
 	w.Header().Set("Content-Type", "application/json")
-	store.Session.Save(r, w)
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(map[string]string{"message": "успешный вход"})
 }
@@ -89,9 +89,9 @@ func Register(manager *db.Manager, w http.ResponseWriter, r *http.Request) {
 	store.Session.Values["username"] = requestData.Username
 	store.Session.Values["email"] = requestData.Email
 	store.Session.Values["user_id"] = id
+	store.Session.Save(r, w)
 
 	w.Header().Set("Content-Type", "application/json")
-	store.Session.Save(r, w)
 	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(map[string]string{"message": "успешная регистрация"})
+	json.NewEncoder(w).Encode(map[string]string{"message": "Успешная регистрация"})
 }

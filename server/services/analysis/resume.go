@@ -1,4 +1,4 @@
-package resumeanalysis
+package analysis
 
 import (
 	"strings"
@@ -20,15 +20,15 @@ func skillMatch(a, b string) bool {
 	return distance <= maxDistance
 }
 
-func AnalizResumeSkills(resskills models.ResumeSkills, vacskills models.VacancySkills) (models.FinalSkills, error) {
+func AnalyseResumeSkills(resSkills models.ResumeSkills, vacSkills models.VacancySkills) (models.FinalSkills, error) {
 	var finalSkills models.FinalSkills
 
 	countSoft := 0
 	countHard := 0
 
-	for _, softVacSkill := range vacskills.SoftSkills {
+	for _, softVacSkill := range vacSkills.SoftSkills {
 		found := false
-		for _, softResSkill := range resskills.SoftSkills {
+		for _, softResSkill := range resSkills.SoftSkills {
 			if skillMatch(softResSkill.SkillName, softVacSkill.SkillName) {
 				finalSkills.CoincidenceSoft = append(finalSkills.CoincidenceSoft, softVacSkill)
 				countSoft++
@@ -41,9 +41,9 @@ func AnalizResumeSkills(resskills models.ResumeSkills, vacskills models.VacancyS
 		}
 	}
 
-	for _, hardVacSkill := range vacskills.HardSkills {
+	for _, hardVacSkill := range vacSkills.HardSkills {
 		found := false
-		for _, hardResSkill := range resskills.HardSkills {
+		for _, hardResSkill := range resSkills.HardSkills {
 			if skillMatch(hardResSkill.SkillName, hardVacSkill.SkillName) {
 				finalSkills.CoincidenceHard = append(finalSkills.CoincidenceHard, hardVacSkill)
 				countHard++
@@ -57,17 +57,17 @@ func AnalizResumeSkills(resskills models.ResumeSkills, vacskills models.VacancyS
 	}
 
 	var softScore, hardScore float64
-	if len(vacskills.SoftSkills) > 0 {
-		softScore = float64(countSoft) / float64(len(vacskills.SoftSkills)) * 100
+	if len(vacSkills.SoftSkills) > 0 {
+		softScore = float64(countSoft) / float64(len(vacSkills.SoftSkills)) * 100
 	}
-	if len(vacskills.HardSkills) > 0 {
-		hardScore = float64(countHard) / float64(len(vacskills.HardSkills)) * 100
+	if len(vacSkills.HardSkills) > 0 {
+		hardScore = float64(countHard) / float64(len(vacSkills.HardSkills)) * 100
 	}
 
 	switch {
-	case len(vacskills.HardSkills) == 0:
+	case len(vacSkills.HardSkills) == 0:
 		finalSkills.Percent = int(softScore)
-	case len(vacskills.SoftSkills) == 0:
+	case len(vacSkills.SoftSkills) == 0:
 		finalSkills.Percent = int(hardScore)
 	default:
 		finalSkills.Percent = int((softScore + hardScore) / 2)

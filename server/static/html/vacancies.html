@@ -52,18 +52,40 @@
               <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
-              <form action="/api/hr/add_vacancy" method="post">
+             <form id="addVacancyForm" enctype="multipart/form-data">
                 <label for="vacancy_name" class="fw-medium">Название вакансии</label>
                 <input type="text" id="vacancy_name" name="vacancy_name" class="form-control mb-3" placeholder="Название вакансии" required>
 
                 <label for="vacancy_file" class="fw-medium">TXT файл вакансии</label>
                 <input type="file" id="vacancy_file" name="vacancy_file" class="form-control mb-3" placeholder="txt файл вакансии" required>
-                
+
                 <div class="modal-footer">
                     <button type="reset" class="btn btn-secondary" data-bs-dismiss="modal">Отменить</button>
                     <button type="submit" class="btn btn-primary">Добавить</button>
                 </div>
             </form>
+            <script>
+                document.getElementById('addVacancyForm').addEventListener('submit', async function (event) {
+                    event.preventDefault();
+                    const formData = new FormData(this);
+
+                    try {
+                        const response = await fetch('/api/hr/add_vacancy', {
+                            method: 'POST',
+                            body: formData
+                        });
+
+                        if (response.ok) {
+                            location.reload();
+                        } else {
+                            const errorText = await response.text();
+                            alert(`Ошибка: ${errorText}`);
+                        }
+                    } catch (error) {
+                        alert(`Ошибка: ${error.message}`);
+                    }
+                });
+            </script>
             </div>
             
           </div>

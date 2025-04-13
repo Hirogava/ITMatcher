@@ -5,8 +5,8 @@ import (
 	"gaspr/db"
 	"gaspr/models"
 	"gaspr/services/ai"
+	"gaspr/services/analysis"
 	"gaspr/services/cookies"
-	"gaspr/services/resumeanalysis"
 	"io"
 	"mime/multipart"
 	"net/http"
@@ -21,7 +21,8 @@ func AddFinder(w http.ResponseWriter, r *http.Request, manager *db.Manager) {
 	phone := r.FormValue("phone_number")
 	email := r.FormValue("email")
 	vacancy := r.FormValue("vacancy")
-	hr := cookies.GetHrAccountCookie(r, manager)
+
+	hrId := cookies.GetId(r)
 
 	var vacSkills models.VacancySkills
 	var resSkills models.ResumeSkills
@@ -34,13 +35,13 @@ func AddFinder(w http.ResponseWriter, r *http.Request, manager *db.Manager) {
 	}
 	defer resumeFile.Close()
 
-	finderId, err := manager.CreateFinder(false, hr.ID)
+	finderId, err := manager.CreateFinder(false, *hrId)
 	if err != nil {
 		w.Write([]byte("Error: " + err.Error()))
 		return
 	}
 
-	vacId, err := manager.GetVacancyIdByName(vacancy, hr.ID)
+	vacId, err := manager.GetVacancyIdByName(vacancy, *hrId)
 	if err != nil {
 		w.Write([]byte("Error: " + err.Error()))
 		return
@@ -76,7 +77,7 @@ func AddFinder(w http.ResponseWriter, r *http.Request, manager *db.Manager) {
 		return
 	}
 
-	analyzedSkills, err := resumeanalysis.AnalizResumeSkills(resSkills, vacSkills)
+	analyzedSkills, err := analysis.AnalyseResumeSkills(resSkills, vacSkills)
 	if err != nil {
 		w.Write([]byte("Error: " + err.Error()))
 		return

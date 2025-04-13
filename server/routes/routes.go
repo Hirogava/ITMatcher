@@ -14,20 +14,8 @@ import (
 )
 
 func Init(r *mux.Router, manager *db.Manager) {
-	LandingRoute(r)
-	LoginRoute(r)
-	RegisterRoute(r)
-	FindersRoute(r, manager)
-	HrAccRoute(r, manager)
-	VacanciesRoute(r, manager)
-	ApiAuthRoute(r, manager)
-	ApiLogoutRoute(r)
-	ApiRegisterRoute(r, manager)
-	ApiExternalHrServiceRoute(r, manager)
-	ApiFinderResumeByIDRoute(r, manager)
-	ApiGetAllResumesRoute(r, manager)
-	ApiNLPRoute(r)
-	ApiSaveUserSkillsRoute(r, manager)
+	StaticRoutes(r, manager)
+	ApiRoutes(r, manager)
 }
 
 func join(elements []models.VacancyHardSkill) string {
@@ -51,18 +39,17 @@ func GetTemplate(name string) *template.Template {
 	return tmpl
 }
 
-func LandingRoute(r *mux.Router) {
+func StaticRoutes(r *mux.Router, manager *db.Manager) {
+
 	r.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		tmpl := GetTemplate("landing")
 		data := map[string]interface{}{
 			"pageTitle":  "Главная",
-			"hr_account": cookies.GetUsernameCookie(r),
+			"hr_account": cookies.GetUsername(r),
 		}
 		tmpl.ExecuteTemplate(w, "base", data)
 	})
-}
 
-func LoginRoute(r *mux.Router) {
 	r.HandleFunc("/login", func(w http.ResponseWriter, r *http.Request) {
 		tmpl := GetTemplate("login")
 		data := map[string]interface{}{
@@ -70,9 +57,7 @@ func LoginRoute(r *mux.Router) {
 		}
 		tmpl.ExecuteTemplate(w, "base", data)
 	})
-}
 
-func RegisterRoute(r *mux.Router) {
 	r.HandleFunc("/register", func(w http.ResponseWriter, r *http.Request) {
 		tmpl := GetTemplate("registration")
 		data := map[string]interface{}{
@@ -80,20 +65,12 @@ func RegisterRoute(r *mux.Router) {
 		}
 		tmpl.ExecuteTemplate(w, "base", data)
 	})
-}
 
-func FindersRoute(r *mux.Router, manager *db.Manager) {
 	r.Handle("/finders", middleware.AuthRequired("hr",
 		http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			tmpl := GetTemplate("finders")
 
-			hrAccount := cookies.GetHrAccountCookie(r, manager)
-			if hrAccount == nil {
-				http.Error(w, "Не удалось получить данные аккаунта", http.StatusUnauthorized)
-				return
-			}
-
-			findResumes, err := manager.GetAllResumesForHr(hrAccount.ID)
+			findResumes, err := manager.GetAllResumesForHr(*cookies.GetId(r))
 			if err != nil {
 				fmt.Println("Ошибка при получении резюме:", err)
 				http.Error(w, "Не удалось получить резюме", http.StatusUnauthorized)
@@ -123,43 +100,30 @@ func FindersRoute(r *mux.Router, manager *db.Manager) {
 
 			tmpl.ExecuteTemplate(w, "base", data)
 		})))
-}
 
-func HrAccRoute(r *mux.Router, manager *db.Manager) {
+	// хряк WW
 	r.Handle("/hracc", middleware.AuthRequired("hr",
 		http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			tmpl := GetTemplate("hr_account")
-			hrAccount := cookies.GetHrAccountCookie(r, manager)
-			if hrAccount == nil {
-				http.Error(w, "Не удалось получить данные аккаунта", http.StatusUnauthorized)
-				return
-			}
+			store := cookies.NewCookieManager(r)
 
 			data := map[string]interface{}{
 				"pageTitle": "Аккаунт",
 				"hr_account": map[string]string{
-					"username": hrAccount.Username,
-					"email":    hrAccount.Email,
+					"username": store.Session.Values["username"].(string),
+					"email":    store.Session.Values["email"].(string),
 				},
 				"current_page": "hr_account",
 			}
 
 			tmpl.ExecuteTemplate(w, "base", data)
 		})))
-}
 
-func VacanciesRoute(r *mux.Router, manager *db.Manager) {
 	r.Handle("/vacancies", middleware.AuthRequired("hr",
 		http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			tmpl := GetTemplate("vacancies")
 
-			hrAccount := cookies.GetHrAccountCookie(r, manager)
-			if hrAccount == nil {
-				http.Error(w, "Не удалось получить данные аккаунта", http.StatusUnauthorized)
-				return
-			}
-
-			vacancies, err := manager.GetAllHrVacancies(hrAccount.ID)
+			vacancies, err := manager.GetAllHrVacancies(*cookies.GetId(r))
 			if err != nil {
 				fmt.Println("Ошибка при получении вакансий:", err)
 				http.Error(w, "Не удалось получить вакансии", http.StatusInternalServerError)

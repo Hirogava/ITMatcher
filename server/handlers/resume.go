@@ -7,8 +7,8 @@ import (
 	"gaspr/db"
 	"gaspr/models"
 	"gaspr/services/ai"
+	"gaspr/services/analysis"
 	"gaspr/services/cookies"
-	"gaspr/services/resumeanalysis"
 	"io"
 	"log"
 	"net/http"
@@ -19,29 +19,10 @@ import (
 	"github.com/gorilla/mux"
 )
 
-type FinderForm struct {
-	HRUsername  string `json:"hr_username"`
-	VacancyName string `json:"vacancy_name"`
-	FirstName   string `json:"first_name"`
-	LastName    string `json:"last_name"`
-	Surname     string `json:"surname"`
-	Email       string `json:"email"`
-	Phone       string `json:"phone"`
-	Portfolio   bool   `json:"portfolio"`
-}
-
 func ResumesList(w http.ResponseWriter, r *http.Request, manager *db.Manager) {
-	vars := mux.Vars(r)
-	hr_id := vars["hr_id"]
-	int_id, err := strconv.Atoi(hr_id)
+	resumes, err := manager.GetAllResumesForHr(*cookies.GetId(r))
 	if err != nil {
-		http.Error(w, "Неверный формат ID", http.StatusBadRequest)
-		return
-	}
-
-	resumes, err := manager.GetAllResumesForHr(int_id)
-	if err != nil {
-		http.Error(w, fmt.Sprintf("Что-то пошло не так: %v", err), http.StatusInternalServerError)
+		http.Error(w, fmt.Sprintf("Проблема с получением резюме: %v", err), http.StatusInternalServerError)
 		return
 	}
 
@@ -78,13 +59,8 @@ func ResumesList(w http.ResponseWriter, r *http.Request, manager *db.Manager) {
 
 func ResumeById(w http.ResponseWriter, r *http.Request, manager *db.Manager) {
 	vars := mux.Vars(r)
-	id := vars["id"]
-	if id == "" {
-		http.Error(w, "ID резюме не указан", http.StatusBadRequest)
-		return
-	}
 
-	resumeId, err := strconv.Atoi(id)
+	resumeId, err := strconv.Atoi(vars["id"])
 	if err != nil {
 		http.Error(w, "Неверный формат ID", http.StatusBadRequest)
 		return
@@ -135,11 +111,23 @@ func SendResume(w http.ResponseWriter, r *http.Request, manager *db.Manager) {
 	}
 	defer jsonFile.Close()
 
+	// лишнее
+	type FinderForm struct {
+		HRUsername  string `json:"hr_username"`
+		VacancyName string `json:"vacancy_name"`
+		FirstName   string `json:"first_name"`
+		LastName    string `json:"last_name"`
+		Surname     string `json:"surname"`
+		Email       string `json:"email"`
+		Phone       string `json:"phone"`
+		Portfolio   bool   `json:"portfolio"`
+	}
 	var finderData FinderForm
 	if err := json.NewDecoder(jsonFile).Decode(&finderData); err != nil {
 		http.Error(w, fmt.Sprintf("Ошибка разбора JSON: %v", err), http.StatusBadRequest)
 		return
 	}
+
 	var hrId, vacId, resumeId int
 	hrId, err = manager.GetHRIdByUsername(finderData.HRUsername)
 	if err != nil {
@@ -153,57 +141,32 @@ func SendResume(w http.ResponseWriter, r *http.Request, manager *db.Manager) {
 		return
 	}
 
-	var vacancyData map[string][]string
 	var vacSkills models.VacancySkills
-	var resSkills models.ResumeSkills
 	vacId, err = manager.GetVacancyIdByName(finderData.VacancyName, hrId)
 	if err == sql.ErrNoRows {
-		vacId, err = manager.CreateVacancy(finderData.VacancyName, hrId)
-		if err != nil {
-			http.Error(w, fmt.Sprintf("Ошибка при записи в базу данных: %v", err), http.StatusInternalServerError)
-			return
-		}
 		vacancyFile, _, err := r.FormFile("vacancy")
 		if err != nil {
-			http.Error(w, fmt.Sprintf("Ошибка при получении файла: %v", err), http.StatusBadRequest)
+			http.Error(w, fmt.Sprintf("Ошибка при получении vacancy: %v", err), http.StatusBadRequest)
 			return
 		}
 		vacancyFileData, err := io.ReadAll(vacancyFile)
 		if err != nil {
-			http.Error(w, fmt.Sprintf("Ошибка при чтении файла: %v", err), http.StatusBadRequest)
+			http.Error(w, fmt.Sprintf("Ошибка при чтении vacancy: %v", err), http.StatusBadRequest)
 			return
 		}
 		vacancyFile.Close()
 
-		vacancyDir := fmt.Sprintf("vacancy/%d", vacId)
-		if err := os.MkdirAll(vacancyDir, os.ModePerm); err != nil {
-			http.Error(w, fmt.Sprintf("Ошибка создания директории: %v", err), http.StatusInternalServerError)
-			return
-		}
-
-		vacancyFilePath := filepath.Join(vacancyDir, "vacancy.txt")
-		if err := os.WriteFile(vacancyFilePath, vacancyFileData, os.ModePerm); err != nil {
-			http.Error(w, fmt.Sprintf("Ошибка сохранения файла: %v", err), http.StatusInternalServerError)
-			return
-		}
-
-		vacancyData, err = ai.Request(string(vacancyFileData))
+		vacSkills, err = CreateVacancy(manager, finderData.VacancyName, vacancyFileData, hrId)
 		if err != nil {
-			http.Error(w, fmt.Sprintf("Ошибка AI модуля: %v", err), http.StatusInternalServerError)
+			http.Error(w, fmt.Sprintf("Ошибка создания вакансии: %v", err), http.StatusInternalServerError)
 			return
 		}
-
-		vacSkills, err = saveVacancySkills(vacId, vacancyData["hard_skills"], vacancyData["soft_skills"], manager)
-		if err != nil {
-			http.Error(w, fmt.Sprintf("Ошибка при записи в базу данных: %v", err), http.StatusInternalServerError)
-			return
-		}
-
 	} else if err != nil {
 		http.Error(w, fmt.Sprintf("Ошибка при получении данных из БД: %v", err), http.StatusInternalServerError)
 		return
 	}
 
+	var resSkills models.ResumeSkills
 	resumeId, err = manager.CreateResumeForHr(finderId, finderData.FirstName, finderData.LastName, finderData.Surname, finderData.Email, finderData.Phone, vacId)
 	if err != nil {
 		http.Error(w, fmt.Sprintf("Ошибка при записи в базу данных: %v", err), http.StatusInternalServerError)
@@ -235,7 +198,7 @@ func SendResume(w http.ResponseWriter, r *http.Request, manager *db.Manager) {
 		return
 	}
 
-	analyzedSkills, err := resumeanalysis.AnalizResumeSkills(resSkills, vacSkills)
+	analyzedSkills, err := analysis.AnalyseResumeSkills(resSkills, vacSkills)
 	if err != nil {
 		http.Error(w, fmt.Sprintf("Ошибка при анализе резюме: %v", err), http.StatusInternalServerError)
 		return
@@ -251,6 +214,7 @@ func SendResume(w http.ResponseWriter, r *http.Request, manager *db.Manager) {
 	return
 }
 
+// Ужасная функция на 130 строчек, надо с ней что-то сделать
 func saveResumeSkills(hardSkills []string, softSkills []string, resumeId int, manager *db.Manager, role string) (models.ResumeSkills, error) {
 	var result models.ResumeSkills
 
@@ -364,64 +328,7 @@ func saveResumeSkills(hardSkills []string, softSkills []string, resumeId int, ma
 	}
 }
 
-func saveVacancySkills(vacancyId int, hardSkills, softSkills []string, manager *db.Manager) (models.VacancySkills, error) {
-	var result models.VacancySkills
-
-	for _, skill := range hardSkills {
-		hardSkillID, err := manager.GetHardSkillByName(skill)
-		if err != nil {
-			if err == sql.ErrNoRows {
-				hardSkillID, err = manager.CreateHardSkill(skill)
-				if err != nil {
-					log.Printf("Ошибка при добавлении hard_skill: %v", err)
-					continue
-				}
-			} else {
-				log.Printf("Ошибка при проверке hard_skill: %v", err)
-				continue
-			}
-		}
-
-		_ = manager.CreateVacancyHardSkill(vacancyId, hardSkillID)
-		result.HardSkills = append(result.HardSkills, models.VacancyHardSkill{
-			Id:        hardSkillID,
-			SkillName: skill,
-		})
-	}
-
-	for _, skill := range softSkills {
-		softSkillID, err := manager.GetSoftSkillByName(skill)
-		if err != nil {
-			if err == sql.ErrNoRows {
-				softSkillID, err = manager.CreateSoftSkill(skill)
-				if err != nil {
-					log.Printf("Ошибка при добавлении soft_skill: %v", err)
-					continue
-				}
-			} else {
-				log.Printf("Ошибка при проверке soft_skill: %v", err)
-				continue
-			}
-		}
-
-		_ = manager.CreateVacancySoftSkill(vacancyId, softSkillID)
-		result.SoftSkills = append(result.SoftSkills, models.VacancySoftSkill{
-			Id:        softSkillID,
-			SkillName: skill,
-		})
-	}
-
-	return result, nil
-}
-
 func SaveUserResume(w http.ResponseWriter, r *http.Request, manager *db.Manager) {
-	vars := mux.Vars(r)
-	user_id := vars["user_id"]
-	intId, err := strconv.Atoi(user_id)
-	if err != nil {
-		http.Error(w, "Неверный формат ID", http.StatusBadRequest)
-		return
-	}
 	resumeFile, _, err := r.FormFile("resume")
 	if err != nil {
 		http.Error(w, fmt.Sprintf("Ошибка при получении файла: %v", err), http.StatusBadRequest)
@@ -435,7 +342,7 @@ func SaveUserResume(w http.ResponseWriter, r *http.Request, manager *db.Manager)
 		return
 	}
 
-	resumeDir := fmt.Sprintf("user/%d/resume", intId)
+	resumeDir := fmt.Sprintf("user/%d/resume", *cookies.GetId(r))
 	if err := os.MkdirAll(resumeDir, os.ModePerm); err != nil {
 		http.Error(w, fmt.Sprintf("Ошибка создания директории: %v", err), http.StatusInternalServerError)
 		return
@@ -455,7 +362,7 @@ func SaveUserResume(w http.ResponseWriter, r *http.Request, manager *db.Manager)
 
 	store := cookies.NewCookieManager(r)
 	role := store.Session.Values["role"].(string)
-	resumeId, err := manager.CreateResumeForUser(intId)
+	resumeId, err := manager.CreateResumeForUser(*cookies.GetId(r))
 	if err != nil {
 		log.Println(err)
 		return

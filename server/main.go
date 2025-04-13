@@ -3,8 +3,8 @@ package main
 import (
 	"fmt"
 	"gaspr/db"
+	"gaspr/routes"
 	"gaspr/services"
-	"gaspr/services/routes"
 	"gaspr/services/cookies"
 	"log"
 	"net/http"
@@ -24,7 +24,7 @@ func main() {
 	log.Println("База данных успешно инициализирована и мигрирована.")
 	defer manager.Close()
 
-	cookies.Init()
+	cookies.Init(os.Getenv("SESSION_KEY"))
 	r := mux.NewRouter()
 
 	routes.Init(r, manager)
