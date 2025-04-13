@@ -182,7 +182,7 @@ footer{
     transition: all 0.3s ease;
 }
 
-input{
+input, textarea, select {
     border: 3px solid #D1D7DA !important;
     border-radius: 30px !important;
     padding: 10px 20px !important;
