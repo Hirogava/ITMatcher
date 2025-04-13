@@ -9,7 +9,7 @@ import (
 )
 
 func Request(resume string) (map[string][]string, error) {
-	cmd := exec.Command("python3.12", "services/ai/main.py")
+	cmd := exec.Command("python", "services/ai/main.py")
 	cmd.Stdin = bytes.NewBufferString(resume)
 	cmd.Env = append(os.Environ(), "PYTHONIOENCODING=utf-8")
 

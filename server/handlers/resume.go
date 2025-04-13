@@ -22,6 +22,7 @@ import (
 func ResumesList(w http.ResponseWriter, r *http.Request, manager *db.Manager) {
 	resumes, err := manager.GetAllResumesForHr(*cookies.GetId(r))
 	if err != nil {
+		log.Printf("Проблема с получением резюме: %v", err)
 		http.Error(w, fmt.Sprintf("Проблема с получением резюме: %v", err), http.StatusInternalServerError)
 		return
 	}
@@ -37,16 +38,25 @@ func ResumesList(w http.ResponseWriter, r *http.Request, manager *db.Manager) {
 			"email":        resume.Email,
 			"phone_number": resume.PhoneNumber,
 			"vacancy_id":   resume.VacancyId,
+			"percent_match": resume.Percent,
 		}
 
-		resumeFilePath := fmt.Sprintf("finder/%d/resume/resume.txt", resume.FinderId)
-		resumeFileData, err := os.ReadFile(resumeFilePath)
+		vacancy, err := manager.GetVacancyByIdForHr(resume.VacancyId)
 		if err != nil {
-			log.Printf("Ошибка при чтении файла резюме: %v", err)
-			resumeMap["resume_content"] = ""
-		} else {
-			resumeMap["resume_content"] = string(resumeFileData)
+			log.Printf("Не удалось получить вакансию для резюме: %v", err)
+			http.Error(w, "Не удалось получить вакансию для резюме", http.StatusInternalServerError)
+			return
 		}
+		resumeMap["vacancy_name"] = vacancy.Name
+		// излишне
+		// resumeFilePath := fmt.Sprintf("finder/%d/resume/resume.txt", resume.FinderId)
+		// resumeFileData, err := os.ReadFile(resumeFilePath)
+		// if err != nil {
+		// 	log.Printf("Ошибка при чтении файла резюме: %v", err)
+		// 	resumeMap["resume_content"] = ""
+		// } else {
+		// 	resumeMap["resume_content"] = string(resumeFileData)
+		// }
 
 		jsonResumes = append(jsonResumes, resumeMap)
 	}

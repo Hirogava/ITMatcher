@@ -140,6 +140,7 @@ type Resume struct {
 	Email       string
 	PhoneNumber string
 	VacancyId   int
+	Percent     int
 }
 
 func (manager *Manager) GetResumeByIdForHr(resumeId int) (*Resume, error) {
@@ -154,10 +155,15 @@ func (manager *Manager) GetResumeByIdForHr(resumeId int) (*Resume, error) {
 
 func (manager *Manager) GetAllResumesForHr(hr_id int) ([]Resume, error) {
 	var resumes []Resume
-	query := `SELECT r.id, r.finder_id, r.first_name, r.last_name, r.surname, r.email, r.phone_number, r.vacancy_id
-	FROM resumes r
-	JOIN finders f ON r.finder_id = f.id
-	WHERE f.hr_id = $1`
+	query := `
+		SELECT r.id, r.finder_id, r.first_name, r.last_name, r.surname, r.email, r.phone_number, r.vacancy_id,
+		       COALESCE(hsa.percent_match, 0) AS percent_match
+		FROM resumes r
+		JOIN finders f ON r.finder_id = f.id
+		LEFT JOIN hr_skill_analysis hsa 
+		    ON hsa.resume_id = r.id AND hsa.vacancy_id = r.vacancy_id
+		WHERE f.hr_id = $1
+	`
 	rows, err := manager.Conn.Query(query, hr_id)
 	if err != nil {
 		return nil, err
@@ -166,7 +172,17 @@ func (manager *Manager) GetAllResumesForHr(hr_id int) ([]Resume, error) {
 
 	for rows.Next() {
 		var resume Resume
-		err := rows.Scan(&resume.Id, &resume.FinderId, &resume.FirstName, &resume.LastName, &resume.Surname, &resume.Email, &resume.PhoneNumber, &resume.VacancyId)
+		err := rows.Scan(
+			&resume.Id,
+			&resume.FinderId,
+			&resume.FirstName,
+			&resume.LastName,
+			&resume.Surname,
+			&resume.Email,
+			&resume.PhoneNumber,
+			&resume.VacancyId,
+			&resume.Percent,
+		)
 		if err != nil {
 			return nil, err
 		}
@@ -259,15 +275,45 @@ func (manager *Manager) GetAnalizedData(finderId int, vacancyId int) (models.Ana
 
 
 func (manager *Manager) insertAnalyzedSkills(table string, id int, analyzedSkills models.FinalSkills, matched bool, skillType string) error {
-	for _, hardSkill := range analyzedSkills.CoincidenceHard {
+	var skillIds []int
+
+	switch skillType {
+	case "hard":
+		if matched {
+			for _, skill := range analyzedSkills.CoincidenceHard {
+				skillIds = append(skillIds, skill.Id)
+			}
+		} else {
+			for _, skill := range analyzedSkills.MismatchHard {
+				skillIds = append(skillIds, skill.Id)
+			}
+		}
+	case "soft":
+		if matched {
+			for _, skill := range analyzedSkills.CoincidenceSoft {
+				skillIds = append(skillIds, skill.Id)
+			}
+		} else {
+			for _, skill := range analyzedSkills.MismatchSoft {
+				skillIds = append(skillIds, skill.Id)
+			}
+		}
+	default:
+		return fmt.Errorf("неизвестный тип скилла: %s", skillType)
+	}
+
+	for _, skillId := range skillIds {
 		query := fmt.Sprintf("INSERT INTO %s (analysis_id, %s_skill_id, matched) VALUES ($1, $2, $3)", table, skillType)
-		_, err := manager.Conn.Exec(query, id, hardSkill, true)
+		_, err := manager.Conn.Exec(query, id, skillId, matched)
 		if err != nil {
 			return err
 		}
 	}
+
 	return nil
 }
+
+
 
 func (manager *Manager) CreateResumeForHr(finderId int, firstName, lastName, surName, email, phoneNumber string, vacancyId int) (int, error) {
 	var resumeId int
