@@ -12,6 +12,7 @@ import (
 	"mime/multipart"
 	"net/http"
 	"os"
+	"log"
 	"path/filepath"
 	"strconv"
 
@@ -40,54 +41,63 @@ func AddFinder(w http.ResponseWriter, r *http.Request, manager *db.Manager) {
 
 	finderId, err := manager.CreateFinder(false, hr.ID)
 	if err != nil {
+		log.Printf("Ошибка создание пользователя: %v", err)
 		w.Write([]byte("Error: " + err.Error()))
 		return
 	}
 
 	vacId, err := manager.GetVacancyIdByName(vacancy, hr.ID)
 	if err != nil {
+		log.Printf("Ошибка получение id вакансии: %v", err)
 		w.Write([]byte("Error: " + err.Error()))
 		return
 	}
 
 	resumeId, err := manager.CreateResumeForHr(finderId, firstName, lastName, surName, phone, email, vacId)
 	if err != nil {
+		log.Printf("Ошибка создание резюме: %v", err)
 		w.Write([]byte("Error: " + err.Error()))
 		return
 	}
 
 	resumeFileData, err := SaveResume(resumeFile, finderId)
 	if err != nil {
+		log.Printf("Ошибка сохранения резюме: %v", err)
 		w.Write([]byte("Error: " + err.Error()))
 		return
 	}
 
 	resumeData, err := ai.Request(string(resumeFileData))
 	if err != nil {
+		log.Printf("Ошибка запроса к AI: %v", err)
 		w.Write([]byte("Error: " + err.Error()))
 		return
 	}
 
 	resSkills, err = saveResumeSkills(resumeData["hard_skills"], resumeData["soft_skills"], resumeId, manager, "hr")
 	if err != nil {
+		log.Printf("Ошибка сохранения навыков резюме: %v", err)
 		w.Write([]byte("Error: " + err.Error()))
 		return
 	}
 
 	vacSkills.HardSkills, vacSkills.SoftSkills, err = manager.GetVacancySkills(vacId)
 	if err != nil {
+		log.Printf("Ошибка получение навыков вакансии: %v", err)
 		w.Write([]byte("Error: " + err.Error()))
 		return
 	}
 
 	analyzedSkills, err := resumeanalysis.AnalizResumeSkills(resSkills, vacSkills)
 	if err != nil {
+		log.Printf("Ошибка анализа навыков: %v", err)
 		w.Write([]byte("Error: " + err.Error()))
 		return
 	}
 
 	err = manager.SaveAnalyzedDataForHr(resumeId, vacId, analyzedSkills)
 	if err != nil {
+		log.Printf("Ошибка сохранения анализа навыков: %v", err)
 		w.Write([]byte("Error: " + err.Error()))
 		return
 	}
@@ -122,23 +132,27 @@ func GetAnalizedResume(w http.ResponseWriter, r *http.Request, manager *db.Manag
 	vacId := vars["vacancy_id"]
 	intFinId, err := strconv.Atoi(finId)
 	if err != nil {
+		log.Printf("Неправильный ID: %v", err)
 		w.Write([]byte("Error: " + err.Error()))
 		return
 	}
 	intVacId, err := strconv.Atoi(vacId)
 	if err != nil {
+		log.Printf("Неправильный ID: %v", err)
 		w.Write([]byte("Error: " + err.Error()))
 		return
 	}
 
 	res, err := manager.GetAnalizedData(intFinId, intVacId)
 	if err != nil {
+		log.Printf("Ошибка получения анализа резюме: %v", err)
 		w.Write([]byte("Error: " + err.Error()))
 		return
 	}
 
 	w.Header().Set("Content-Type", "application/json")
 	if err := json.NewEncoder(w).Encode(res); err != nil {
+		log.Printf("Ошибка вывода резюме: %v", err)
 		w.Write([]byte("Error: " + err.Error()))
 		return
 	}
