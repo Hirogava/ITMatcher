@@ -13,7 +13,6 @@ import (
 	"log"
 	"net/http"
 	"os"
-	"path/filepath"
 	"strconv"
 
 	"github.com/gorilla/mux"
@@ -326,54 +325,4 @@ func saveResumeSkills(hardSkills []string, softSkills []string, resumeId int, ma
 	default:
 		return result, fmt.Errorf("Неверно указана роль: %s", role)
 	}
-}
-
-func SaveUserResume(w http.ResponseWriter, r *http.Request, manager *db.Manager) {
-	resumeFile, _, err := r.FormFile("resume")
-	if err != nil {
-		http.Error(w, fmt.Sprintf("Ошибка при получении файла: %v", err), http.StatusBadRequest)
-		return
-	}
-	defer resumeFile.Close()
-
-	resumeFileData, err := io.ReadAll(resumeFile)
-	if err != nil {
-		http.Error(w, fmt.Sprintf("Ошибка при чтении файла: %v", err), http.StatusBadRequest)
-		return
-	}
-
-	resumeDir := fmt.Sprintf("user/%d/resume", *cookies.GetId(r))
-	if err := os.MkdirAll(resumeDir, os.ModePerm); err != nil {
-		http.Error(w, fmt.Sprintf("Ошибка создания директории: %v", err), http.StatusInternalServerError)
-		return
-	}
-
-	resumeFilePath := filepath.Join(resumeDir, "resume.txt")
-	if err := os.WriteFile(resumeFilePath, resumeFileData, os.ModePerm); err != nil {
-		http.Error(w, fmt.Sprintf("Ошибка сохранения файла: %v", err), http.StatusInternalServerError)
-		return
-	}
-
-	resumeData, err := ai.Request(string(resumeFileData))
-	if err != nil {
-		log.Println(err)
-		return
-	}
-
-	store := cookies.NewCookieManager(r)
-	role := store.Session.Values["role"].(string)
-	resumeId, err := manager.CreateResumeForUser(*cookies.GetId(r))
-	if err != nil {
-		log.Println(err)
-		return
-	}
-
-	_, err = saveResumeSkills(resumeData["hard_skills"], resumeData["soft_skills"], resumeId, manager, role)
-	if err != nil {
-		log.Println(err)
-		return
-	}
-
-	w.WriteHeader(http.StatusOK)
-	return
 }

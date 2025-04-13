@@ -42,3 +42,8 @@ type AnalyzedSkills struct {
 	Mismatch []string `json:"mismatch"`
 	Coincide []string `json:"coincide"`
 }
+
+type VacancyMatchResult struct {
+	VacancyId int `json:"vacancy_id"`
+	MatchRate int `json:"match_rate"`
+}

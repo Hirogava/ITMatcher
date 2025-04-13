@@ -257,7 +257,6 @@ func (manager *Manager) GetAnalizedData(finderId int, vacancyId int) (models.Ana
 	return result, nil
 }
 
-
 func (manager *Manager) insertAnalyzedSkills(table string, id int, analyzedSkills models.FinalSkills, matched bool, skillType string) error {
 	for _, hardSkill := range analyzedSkills.CoincidenceHard {
 		query := fmt.Sprintf("INSERT INTO %s (analysis_id, %s_skill_id, matched) VALUES ($1, $2, $3)", table, skillType)
@@ -376,6 +375,33 @@ func (manager *Manager) GetAllHrVacancies(hr_id int) ([]Vacancy, error) {
 		vacancy.SoftSkills = soft
 		vacancies = append(vacancies, vacancy)
 	}
+
+	if err = rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return vacancies, nil
+}
+
+func (manager *Manager) GetAllVacancies() ([]Vacancy, error) {
+	var vacancies []Vacancy
+
+	query := `SELECT id, name FROM vacancies`
+	rows, err := manager.Conn.Query(query)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var vacancy Vacancy
+		err := rows.Scan(&vacancy.Id, &vacancy.Name)
+		if err != nil {
+			return nil, err
+		}
+		vacancies = append(vacancies, vacancy)
+	}
+
 	if err = rows.Err(); err != nil {
 		return nil, err
 	}
@@ -494,4 +520,26 @@ func (manager *Manager) CreateResumeForUser(user_id int) (int, error) {
 		return 0, err
 	}
 	return resumeId, nil
+}
+
+func (manager *Manager) UpdateUserResumesWithTopVacancies(Id int, topVacs []models.VacancyMatchResult) error {
+	query := `
+		UPDATE user_resumes
+		SET vacancy_1_id = $1, vacancy_2_id = $2, vacancy_3_id = $3
+		WHERE id = $4
+	`
+
+	var vac1, vac2, vac3 *int
+	if len(topVacs) > 0 {
+		vac1 = &topVacs[0].VacancyId
+	}
+	if len(topVacs) > 1 {
+		vac2 = &topVacs[1].VacancyId
+	}
+	if len(topVacs) > 2 {
+		vac3 = &topVacs[2].VacancyId
+	}
+
+	_, err := manager.Conn.Exec(query, vac1, vac2, vac3, Id)
+	return err
 }

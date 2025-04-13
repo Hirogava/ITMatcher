@@ -88,17 +88,17 @@ func ApiRoutes(r *mux.Router, manager *db.Manager) {
 			handlers.AddFinder(w, r, manager)
 		}))).Methods(http.MethodPost)
 
+	r.Handle("/api/hr/finder/{finder_id}/{vacancy_id}", middleware.AuthRequired("hr",
+		http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			handlers.GetAnalizedResume(w, r, manager)
+		}))).Methods(http.MethodGet)
+
 	/*
 		Finder
 	*/
-	r.Handle("/api/finder/add_resume", middleware.AuthRequired("finder",
+	r.Handle("/api/finder/add_resume", middleware.AuthRequired("users",
 		http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			handlers.SaveUserResume(w, r, manager)
+			handlers.AddFinderResume(w, r, manager)
 		}))).Methods(http.MethodPost)
-	
-	r.Handle("/api/hr/get_finder/{finder_id}/{vacancy_id}", middleware.AuthRequired("hr",
-	http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		handlers.GetAnalizedResume(w, r, manager)
-	}))).Methods(http.MethodGet)
 
 }

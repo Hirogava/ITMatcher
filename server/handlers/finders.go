@@ -9,11 +9,12 @@ import (
 	"gaspr/services/analysis"
 	"gaspr/services/cookies"
 	"io"
+	"log"
 	"mime/multipart"
 	"net/http"
 	"os"
-	"log"
 	"path/filepath"
+	"sort"
 	"strconv"
 
 	"github.com/gorilla/mux"
@@ -157,4 +158,99 @@ func GetAnalizedResume(w http.ResponseWriter, r *http.Request, manager *db.Manag
 		w.Write([]byte("Error: " + err.Error()))
 		return
 	}
+}
+
+func AddFinderResume(w http.ResponseWriter, r *http.Request, manager *db.Manager) {
+	resumeFile, _, err := r.FormFile("resume")
+	if err != nil {
+		http.Error(w, fmt.Sprintf("Ошибка при получении файла: %v", err), http.StatusBadRequest)
+		return
+	}
+	defer resumeFile.Close()
+
+	resumeFileData, err := io.ReadAll(resumeFile)
+	if err != nil {
+		http.Error(w, fmt.Sprintf("Ошибка при чтении файла: %v", err), http.StatusBadRequest)
+		return
+	}
+
+	resumeDir := fmt.Sprintf("user/%d/resume", *cookies.GetId(r))
+	if err := os.MkdirAll(resumeDir, os.ModePerm); err != nil {
+		http.Error(w, fmt.Sprintf("Ошибка создания директории: %v", err), http.StatusInternalServerError)
+		return
+	}
+
+	resumeFilePath := filepath.Join(resumeDir, "resume.txt")
+	if err := os.WriteFile(resumeFilePath, resumeFileData, os.ModePerm); err != nil {
+		http.Error(w, fmt.Sprintf("Ошибка сохранения файла: %v", err), http.StatusInternalServerError)
+		return
+	}
+
+	resumeData, err := ai.Request(string(resumeFileData))
+	if err != nil {
+		log.Println(err)
+		return
+	}
+
+	resumeId, err := manager.CreateResumeForUser(*cookies.GetId(r))
+	if err != nil {
+		log.Println(err)
+		return
+	}
+
+	resumeSkills, err := saveResumeSkills(resumeData["hard_skills"], resumeData["soft_skills"], resumeId, manager, "users")
+	if err != nil {
+		log.Println(err)
+		return
+	}
+
+	top_vacs := GetTopMatchingVacancies(resumeSkills, manager)
+	if len(top_vacs) >= 3 {
+		err = manager.UpdateUserResumesWithTopVacancies(resumeId, top_vacs)
+		if err != nil {
+			log.Printf("Ошибка сохранения топ-3 вакансий: %v", err)
+			w.Write([]byte("Афигеть: " + err.Error()))
+			return
+		}
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(top_vacs)
+	w.WriteHeader(http.StatusOK)
+}
+
+func GetTopMatchingVacancies(resumeSkills models.ResumeSkills, manager *db.Manager) []models.VacancyMatchResult {
+	vacancies, err := manager.GetAllVacancies()
+	if err != nil {
+		log.Printf("Ошибка получения списка вакансий: %v", err)
+		return []models.VacancyMatchResult{}
+	}
+
+	var results []models.VacancyMatchResult
+
+	for _, vacancy := range vacancies {
+		var vacSkills models.VacancySkills
+		vacSkills.HardSkills, vacSkills.SoftSkills, err = manager.GetVacancySkills(vacancy.Id)
+		if err != nil {
+			log.Printf("Ошибка получения навыков вакансии %d: %v", vacancy.Id, err)
+			continue
+		}
+
+		analyzedSkills, err := analysis.AnalyseResumeSkills(resumeSkills, vacSkills)
+		if err != nil {
+			log.Printf("Ошибка анализа навыков для вакансии %d: %v", vacancy.Id, err)
+			continue
+		}
+
+		results = append(results, models.VacancyMatchResult{
+			VacancyId: vacancy.Id,
+			MatchRate: analyzedSkills.Percent,
+		})
+	}
+
+	sort.Slice(results, func(i, j int) bool {
+		return results[i].MatchRate > results[j].MatchRate
+	})
+
+	return results
 }
