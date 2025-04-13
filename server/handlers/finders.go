@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"encoding/json"
 	"fmt"
 	"gaspr/db"
 	"gaspr/models"
@@ -12,6 +13,9 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"strconv"
+
+	"github.com/gorilla/mux"
 )
 
 func AddFinder(w http.ResponseWriter, r *http.Request, manager *db.Manager) {
@@ -90,7 +94,6 @@ func AddFinder(w http.ResponseWriter, r *http.Request, manager *db.Manager) {
 
 	w.Header().Set("Content-Type", "application/json")
 	w.Write([]byte("Resume uploaded successfully"))
-	return
 }
 
 func SaveResume(resumeFile multipart.File, finderId int) ([]byte, error) {
@@ -111,4 +114,33 @@ func SaveResume(resumeFile multipart.File, finderId int) ([]byte, error) {
 	}
 
 	return resumeFileData, nil
+}
+
+func GetAnalizedResume(w http.ResponseWriter, r *http.Request, manager *db.Manager) {
+	vars := mux.Vars(r)
+	finId := vars["finder_id"]
+	vacId := vars["vacancy_id"]
+	intFinId, err := strconv.Atoi(finId)
+	if err != nil {
+		w.Write([]byte("Error: " + err.Error()))
+
+		return
+	}
+	intVacId, err := strconv.Atoi(vacId)
+	if err != nil {
+		w.Write([]byte("Error: " + err.Error()))
+		return
+	}
+
+	res, err := manager.GetAnalizedData(intFinId, intVacId)
+	if err != nil {
+		w.Write([]byte("Error: " + err.Error()))
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	if err := json.NewEncoder(w).Encode(res); err != nil {
+		w.Write([]byte("Error: " + err.Error()))
+		return
+	}
 }

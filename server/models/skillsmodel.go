@@ -37,3 +37,8 @@ type FinalSkills struct {
 	MismatchHard    []VacancyHardSkill
 	MismatchSoft    []VacancySoftSkill
 }
+
+type AnalyzedSkills struct {
+	Mismatch []string
+	Coincide []string
+}

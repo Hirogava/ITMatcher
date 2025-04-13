@@ -208,6 +208,56 @@ func (manager *Manager) SaveAnalyzedDataForHr(resumeId int, vacancyId int, analy
 	return nil
 }
 
+func (manager *Manager) GetAnalizedData(finderId int, vacancyId int) (models.AnalyzedSkills, error) {
+	query := `
+	(
+	  SELECT hs.hard_skill AS skill, ahs.matched
+	  FROM hr_analysis_hard_skills ahs
+	  JOIN hard_skills hs ON ahs.hard_skill_id = hs.id
+	  JOIN hr_skill_analysis hsa ON ahs.analysis_id = hsa.id
+	  WHERE hsa.resume_id = $1 AND hsa.vacancy_id = $2
+	)
+	UNION ALL
+	(
+	  SELECT ss.soft_skill AS skill, ass.matched
+	  FROM hr_analysis_soft_skills ass
+	  JOIN soft_skills ss ON ass.soft_skill_id = ss.id
+	  JOIN hr_skill_analysis hsa ON ass.analysis_id = hsa.id
+	  WHERE hsa.resume_id = $1 AND hsa.vacancy_id = $2
+	)
+	`
+
+	rows, err := manager.Conn.Query(query, finderId, vacancyId)
+	if err != nil {
+		return models.AnalyzedSkills{}, err
+	}
+	defer rows.Close()
+
+	var result models.AnalyzedSkills
+
+	for rows.Next() {
+		var skill string
+		var matched bool
+
+		if err := rows.Scan(&skill, &matched); err != nil {
+			return models.AnalyzedSkills{}, err
+		}
+
+		if matched {
+			result.Coincide = append(result.Coincide, skill)
+		} else {
+			result.Mismatch = append(result.Mismatch, skill)
+		}
+	}
+
+	if err = rows.Err(); err != nil {
+		return models.AnalyzedSkills{}, err
+	}
+
+	return result, nil
+}
+
+
 func (manager *Manager) insertAnalyzedSkills(table string, id int, analyzedSkills models.FinalSkills, matched bool, skillType string) error {
 	for _, hardSkill := range analyzedSkills.CoincidenceHard {
 		query := fmt.Sprintf("INSERT INTO %s (analysis_id, %s_skill_id, matched) VALUES ($1, $2, $3)", table, skillType)

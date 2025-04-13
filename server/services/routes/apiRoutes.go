@@ -100,6 +100,13 @@ func ApiAddFinder(r *mux.Router, manager *db.Manager) {
 		}))).Methods(http.MethodGet)
 }
 
+func ApiGetFinderByIDRoute(r *mux.Router, manager *db.Manager) {
+	r.Handle("/api/hr/get_finder/{finder_id}/{vacancy_id}", middleware.AuthRequired("hr",
+		http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			handlers.GetAnalizedResume(w, r, manager)
+		}))).Methods(http.MethodGet)
+}
+
 /*
 User роуты
 */
