@@ -282,21 +282,11 @@ func (manager *Manager) GetHRIdByUsername(username string) (int, error) {
 Vacancy
 */
 
-type VacancySoftSkill struct {
-	Id        int
-	SkillName string
-}
-
-type VacancyHardSkill struct {
-	Id        int
-	SkillName string
-}
-
 type Vacancy struct {
 	Id         int
 	Name       string
-	HardSkills []VacancyHardSkill
-	SoftSkills []VacancySoftSkill
+	HardSkills []models.VacancyHardSkill
+	SoftSkills []models.VacancySoftSkill
 }
 
 func (manager *Manager) CreateVacancy(name string, hr_id int) (int, error) {
@@ -383,9 +373,9 @@ func (manager *Manager) CreateVacancySoftSkill(vacancyId int, skillId int) error
 	return manager.createVacancySkill("vacantion_soft_skills", "soft_skill_id", vacancyId, skillId)
 }
 
-func (manager *Manager) GetVacancySkills(vacancyId int) ([]VacancyHardSkill, []VacancySoftSkill, error) {
-	var hardSkills []VacancyHardSkill
-	var softSkills []VacancySoftSkill
+func (manager *Manager) GetVacancySkills(vacancyId int) ([]models.VacancyHardSkill, []models.VacancySoftSkill, error) {
+	var hardSkills []models.VacancyHardSkill
+	var softSkills []models.VacancySoftSkill
 
 	query := `SELECT hs.id, hs.hard_skill
 	FROM vacantion_hard_skills vhs
@@ -399,7 +389,7 @@ func (manager *Manager) GetVacancySkills(vacancyId int) ([]VacancyHardSkill, []V
 	defer rows.Close()
 
 	for rows.Next() {
-		var hardSkill VacancyHardSkill
+		var hardSkill models.VacancyHardSkill
 		err := rows.Scan(&hardSkill.Id, &hardSkill.SkillName)
 		if err != nil {
 			return nil, nil, err
@@ -419,7 +409,7 @@ func (manager *Manager) GetVacancySkills(vacancyId int) ([]VacancyHardSkill, []V
 	defer rows.Close()
 
 	for rows.Next() {
-		var softSkill VacancySoftSkill
+		var softSkill models.VacancySoftSkill
 		err := rows.Scan(&softSkill.Id, &softSkill.SkillName)
 		if err != nil {
 			return nil, nil, err

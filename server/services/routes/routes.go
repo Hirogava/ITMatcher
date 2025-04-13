@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"gaspr/db"
 	middleware "gaspr/handlers/middlewares"
+	"gaspr/models"
 	"gaspr/services/cookies"
 	"html/template"
 	"net/http"
@@ -29,7 +30,7 @@ func Init(r *mux.Router, manager *db.Manager) {
 	ApiSaveUserSkillsRoute(r, manager)
 }
 
-func join(elements []db.VacancyHardSkill) string {
+func join(elements []models.VacancyHardSkill) string {
 	var skillNames []string
 	for _, element := range elements {
 		skillNames = append(skillNames, element.SkillName)

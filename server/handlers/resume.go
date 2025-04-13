@@ -215,22 +215,11 @@ func SendResume(w http.ResponseWriter, r *http.Request, manager *db.Manager) {
 		http.Error(w, fmt.Sprintf("Ошибка при получении файла: %v", err), http.StatusBadRequest)
 		return
 	}
-	resumeFileData, err := io.ReadAll(resumeFile)
+	defer resumeFile.Close()
+
+	resumeFileData, err := SaveResume(resumeFile, finderId)
 	if err != nil {
-		http.Error(w, fmt.Sprintf("Ошибка при чтении файла: %v", err), http.StatusBadRequest)
-		return
-	}
-	resumeFile.Close()
-
-	resumeDir := fmt.Sprintf("finder/%d/resume", finderId)
-	if err := os.MkdirAll(resumeDir, os.ModePerm); err != nil {
-		http.Error(w, fmt.Sprintf("Ошибка создания директории: %v", err), http.StatusInternalServerError)
-		return
-	}
-
-	resumeFilePath := filepath.Join(resumeDir, "resume.txt")
-	if err := os.WriteFile(resumeFilePath, resumeFileData, os.ModePerm); err != nil {
-		http.Error(w, fmt.Sprintf("Ошибка сохранения файла: %v", err), http.StatusInternalServerError)
+		http.Error(w, fmt.Sprintf("Ошибка при сохранении файла: %v", err), http.StatusBadRequest)
 		return
 	}
 

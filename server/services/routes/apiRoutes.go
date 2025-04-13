@@ -93,6 +93,13 @@ func ApiGetAllResumesRoute(r *mux.Router, manager *db.Manager) {
 		}))).Methods(http.MethodGet)
 }
 
+func ApiAddFinder(r *mux.Router, manager *db.Manager) {
+	r.Handle("/api/hr/add_finder", middleware.AuthRequired("hr",
+		http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			handlers.AddFinder(w, r, manager)
+		}))).Methods(http.MethodGet)
+}
+
 /*
 User роуты
 */
