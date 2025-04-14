@@ -36,7 +36,8 @@ func AddFinder(w http.ResponseWriter, r *http.Request, manager *db.Manager) {
 	r.ParseMultipartForm(10 << 20)
 	resumeFile, _, err := r.FormFile("resume_file")
 	if err != nil {
-		w.Write([]byte("Error: " + err.Error()))
+		log.Printf("Ошибка загрузки файла: %v", err)
+		http.Error(w, "Ошибка загрузки файла", http.StatusInternalServerError)
 		return
 	}
 	defer resumeFile.Close()
@@ -44,63 +45,63 @@ func AddFinder(w http.ResponseWriter, r *http.Request, manager *db.Manager) {
 	finderId, err := manager.CreateFinder(false, *hrId)
 	if err != nil {
 		log.Printf("Ошибка создание пользователя: %v", err)
-		w.Write([]byte("Error: " + err.Error()))
+		http.Error(w, "Ошибка сохранения пользователя", http.StatusInternalServerError)
 		return
 	}
 
 	vacId, err := manager.GetVacancyIdByName(vacancy, *hrId)
 	if err != nil {
 		log.Printf("Ошибка получение id вакансии: %v", err)
-		w.Write([]byte("Error: " + err.Error()))
+		http.Error(w, "Ошибка получения id вакансии", http.StatusInternalServerError)
 		return
 	}
 
 	resumeId, err := manager.CreateResumeForHr(finderId, firstName, lastName, surName, phone, email, vacId)
 	if err != nil {
 		log.Printf("Ошибка создание резюме: %v", err)
-		w.Write([]byte("Error: " + err.Error()))
+		http.Error(w, "Ошибка создания резюме", http.StatusInternalServerError)
 		return
 	}
 
 	resumeFileData, err := SaveResume(resumeFile, finderId)
 	if err != nil {
 		log.Printf("Ошибка сохранения резюме: %v", err)
-		w.Write([]byte("Error: " + err.Error()))
+		http.Error(w, "Ошибка сохранения резюме", http.StatusInternalServerError)
 		return
 	}
 
 	resumeData, err := ai.Request(string(resumeFileData))
 	if err != nil {
 		log.Printf("Ошибка запроса к AI: %v", err)
-		w.Write([]byte("Error: " + err.Error()))
+		http.Error(w, "Ошибка запроса к AI", http.StatusInternalServerError)
 		return
 	}
 
 	resSkills, err = saveResumeSkills(resumeData["hard_skills"], resumeData["soft_skills"], resumeId, manager, "hr")
 	if err != nil {
 		log.Printf("Ошибка сохранения навыков резюме: %v", err)
-		w.Write([]byte("Error: " + err.Error()))
+		http.Error(w, "Ошибка сохранения навыков резюме", http.StatusInternalServerError)
 		return
 	}
 
 	vacSkills.HardSkills, vacSkills.SoftSkills, err = manager.GetVacancySkills(vacId)
 	if err != nil {
 		log.Printf("Ошибка получение навыков вакансии: %v", err)
-		w.Write([]byte("Error: " + err.Error()))
+		http.Error(w, "Ошибка получения навыков вакансии", http.StatusInternalServerError)
 		return
 	}
 
 	analyzedSkills, err := analysis.AnalyseResumeSkills(resSkills, vacSkills)
 	if err != nil {
 		log.Printf("Ошибка анализа навыков: %v", err)
-		w.Write([]byte("Error: " + err.Error()))
+		http.Error(w, "Ошибка анализа навыков", http.StatusInternalServerError)
 		return
 	}
 
 	err = manager.SaveAnalyzedDataForHr(resumeId, vacId, analyzedSkills)
 	if err != nil {
 		log.Printf("Ошибка сохранения анализа навыков: %v", err)
-		w.Write([]byte("Error: " + err.Error()))
+		http.Error(w, "Ошибка сохранения анализа навыков", http.StatusInternalServerError)
 		return
 	}
 
@@ -135,27 +136,48 @@ func GetAnalizedResume(w http.ResponseWriter, r *http.Request, manager *db.Manag
 	intFinId, err := strconv.Atoi(finId)
 	if err != nil {
 		log.Printf("Неправильный ID: %v", err)
-		w.Write([]byte("Error: " + err.Error()))
+		http.Error(w, fmt.Sprintf("Ошибка ID: %v", err), http.StatusBadRequest)
 		return
 	}
 	intVacId, err := strconv.Atoi(vacId)
 	if err != nil {
 		log.Printf("Неправильный ID: %v", err)
-		w.Write([]byte("Error: " + err.Error()))
+		http.Error(w, fmt.Sprintf("Ошибка ID: %v", err), http.StatusBadRequest)
 		return
 	}
 
 	res, err := manager.GetAnalizedData(intFinId, intVacId)
 	if err != nil {
 		log.Printf("Ошибка получения анализа резюме: %v", err)
-		w.Write([]byte("Error: " + err.Error()))
+		http.Error(w, fmt.Sprintf("Ошибка при получении анализа резюме: %v", err), http.StatusBadRequest)
 		return
 	}
 
+	resume, err := os.Open(filepath.Join("finder", strconv.Itoa(intFinId), "resume", "resume.txt"))
+	if err != nil {
+		log.Printf("Ошибка открытия файла: %v", err)
+		http.Error(w, fmt.Sprintf("Ошибка при открытии файла: %v", err), http.StatusBadRequest)
+		return
+	}
+	defer resume.Close()
+
+	resumeFileData, err := io.ReadAll(resume)
+	if err != nil {
+		log.Printf("Ошибка чтения файла: %v", err)
+		http.Error(w, fmt.Sprintf("Ошибка при чтении файла: %v", err), http.StatusBadRequest)
+		return
+	}
+
+	jsonResume := map[string]interface{}{
+		"resume_text" : string(resumeFileData),
+		"mismatch" : res.Mismatch,
+		"coincidence" : res.Coincidence,
+	}
+
 	w.Header().Set("Content-Type", "application/json")
-	if err := json.NewEncoder(w).Encode(res); err != nil {
+	if err := json.NewEncoder(w).Encode(jsonResume); err != nil {
 		log.Printf("Ошибка вывода резюме: %v", err)
-		w.Write([]byte("Error: " + err.Error()))
+		http.Error(w, fmt.Sprintf("Ошибка при выводе резюме: %v", err), http.StatusBadRequest)
 		return
 	}
 }

@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"database/sql"
+	"encoding/json"
 	"fmt"
 	"gaspr/db"
 	"gaspr/models"
@@ -12,6 +13,9 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"strconv"
+
+	"github.com/gorilla/mux"
 )
 
 func AddVacancy(w http.ResponseWriter, r *http.Request, manager *db.Manager) {
@@ -66,6 +70,47 @@ func CreateVacancy(manager *db.Manager, vacancyName string, vacancyFileData []by
 		return models.VacancySkills{}, err
 	}
 	return vacSkills, nil
+}
+
+func GetVacancy(w http.ResponseWriter, r *http.Request, manager *db.Manager) {
+	vars := mux.Vars(r)
+	vacancyId, err := strconv.Atoi(vars["vacancyId"])
+	if err != nil {
+		log.Printf("Неверно указан Id: %v", err)
+		http.Error(w, fmt.Sprintf("Неверно указан Id: %v", err), http.StatusBadRequest)
+		return
+	}
+
+	vacancy, err := manager.GetVacancyByIdForHr(vacancyId)
+	if err != nil {
+		log.Printf("Ошибка получения вакансии: %v", err)
+		http.Error(w, fmt.Sprintf("Ошибка получения вакансии: %v", err), http.StatusInternalServerError)
+		return
+	}
+
+	vacancyData, err := os.Open(filepath.Join("vacancy", strconv.Itoa(vacancyId), "vacancy.txt"))
+	if err != nil {
+		log.Printf("Ошибка открытия файла вакансии: %v", err)
+		http.Error(w, fmt.Sprintf("Ошибка открытия файла вакансии: %v", err), http.StatusInternalServerError)
+		return
+	}
+	defer vacancyData.Close()
+
+	vacancyDataBytes, err := io.ReadAll(vacancyData)
+	if err != nil {
+		log.Printf("Ошибка чтения файла вакансии: %v", err)
+		http.Error(w, fmt.Sprintf("Ошибка чтения файла вакансии: %v", err), http.StatusInternalServerError)
+		return
+	}
+
+	vacancy.VacancyText = string(vacancyDataBytes)
+
+	w.Header().Set("Content-Type", "application/json")
+	if err := json.NewEncoder(w).Encode(vacancy); err != nil {
+		log.Printf("Ошибка при записи ответа: %v", err)
+		http.Error(w, fmt.Sprintf("Ошибка при записи ответа: %v", err), http.StatusInternalServerError)
+		return
+	}
 }
 
 func saveVacancySkills(vacancyId int, hardSkills, softSkills []string, manager *db.Manager) (models.VacancySkills, error) {

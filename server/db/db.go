@@ -260,7 +260,7 @@ func (manager *Manager) GetAnalizedData(finderId int, vacancyId int) (models.Ana
 		}
 
 		if matched {
-			result.Coincide = append(result.Coincide, skill)
+			result.Coincidence = append(result.Coincidence, skill)
 		} else {
 			result.Mismatch = append(result.Mismatch, skill)
 		}
@@ -377,13 +377,6 @@ func (manager *Manager) GetHRIdByUsername(username string) (int, error) {
 Vacancy
 */
 
-type Vacancy struct {
-	Id         int
-	Name       string
-	HardSkills []models.VacancyHardSkill
-	SoftSkills []models.VacancySoftSkill
-}
-
 func (manager *Manager) CreateVacancy(name string, hr_id int) (int, error) {
 	var vacId int
 	err := manager.Conn.QueryRow("INSERT INTO vacancies (name, hr_id) VALUES ($1, $2) RETURNING id", name, hr_id).Scan(&vacId)
@@ -393,8 +386,8 @@ func (manager *Manager) CreateVacancy(name string, hr_id int) (int, error) {
 	return vacId, err
 }
 
-func (manager *Manager) GetAllHrVacancies(hr_id int) ([]Vacancy, error) {
-	var vacancies []Vacancy
+func (manager *Manager) GetAllHrVacancies(hr_id int) ([]models.Vacancy, error) {
+	var vacancies []models.Vacancy
 
 	query := `SELECT v.id, v.name
 	FROM vacancies v
@@ -406,7 +399,7 @@ func (manager *Manager) GetAllHrVacancies(hr_id int) ([]Vacancy, error) {
 	defer rows.Close()
 
 	for rows.Next() {
-		var vacancy Vacancy
+		var vacancy models.Vacancy
 		err := rows.Scan(&vacancy.Id, &vacancy.Name)
 		if err != nil {
 			return nil, err
@@ -429,8 +422,8 @@ func (manager *Manager) GetAllHrVacancies(hr_id int) ([]Vacancy, error) {
 	return vacancies, nil
 }
 
-func (manager *Manager) GetAllVacancies() ([]Vacancy, error) {
-	var vacancies []Vacancy
+func (manager *Manager) GetAllVacancies() ([]models.Vacancy, error) {
+	var vacancies []models.Vacancy
 
 	query := `SELECT id, name FROM vacancies`
 	rows, err := manager.Conn.Query(query)
@@ -440,7 +433,7 @@ func (manager *Manager) GetAllVacancies() ([]Vacancy, error) {
 	defer rows.Close()
 
 	for rows.Next() {
-		var vacancy Vacancy
+		var vacancy models.Vacancy
 		err := rows.Scan(&vacancy.Id, &vacancy.Name)
 		if err != nil {
 			return nil, err
@@ -464,8 +457,8 @@ func (manager *Manager) GetVacancyIdByName(name string, hr_id int) (int, error) 
 	return vacId, nil
 }
 
-func (manager *Manager) GetVacancyByIdForHr(id int) (Vacancy, error) {
-	var vacancy Vacancy
+func (manager *Manager) GetVacancyByIdForHr(id int) (models.Vacancy, error) {
+	var vacancy models.Vacancy
 
 	query := "SELECT id, name FROM vacancies WHERE id = $1"
 	err := manager.Conn.QueryRow(query, id).Scan(&vacancy.Id, &vacancy.Name)

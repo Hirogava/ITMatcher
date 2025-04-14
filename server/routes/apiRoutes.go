@@ -93,6 +93,11 @@ func ApiRoutes(r *mux.Router, manager *db.Manager) {
 			handlers.GetAnalizedResume(w, r, manager)
 		}))).Methods(http.MethodGet)
 
+	r.Handle("/api/hr/get_vacancy/{vacancy_id}", middleware.AuthRequired("hr", 
+		http.HandlerFunc(func(w http.ResponseWriter, r *http.Request){
+			handlers.GetVacancy(w, r, manager)
+		}))).Methods(http.MethodGet)
+
 	/*
 		Finder
 	*/
