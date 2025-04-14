@@ -134,10 +134,11 @@
                 }
 
                 const data = await response.json();
+
                 console.log(data["name"]);
                 document.getElementById('vacancy_name1').innerText = data["name"];
-                document.getElementById('vacancy_hardskills').innerText = !data ? data.hard_skills.join(", ") : "Нет данных"; 
-                document.getElementById('vacancy_softskills').innerText = !data ? data.soft_skills.join(", ") : "Нет данных";
+                document.getElementById('vacancy_hardskills').innerText = data.hard_skills ? data.hard_skills.join(", ") : "Нет данных"; 
+                document.getElementById('vacancy_softskills').innerText = data.soft_skills ? data.soft_skills.join(", ") : "Нет данных";
                 document.getElementById('vacancy_text').innerText = data.vacancy_text;       
             } catch (error) {
                 console.error('Ошибка при получении данных вакансии:', error);

@@ -139,8 +139,8 @@
 
                 document.getElementById('finder_name').innerText = first_name + " " + last_name + " " + surname;
                 document.getElementById('finder_vacancy').innerText = vacancy_name;
-                document.getElementById('coincidence_skills').innerText = !data ? data.coincidence.join(", ") : "Нет данных"; 
-                document.getElementById('mismatch_skills').innerText = !data ? data.mismatch.join(", ") : "Нет данных";
+                document.getElementById('coincidence_skills').innerText = data.coincidence ? data.coincidence.join(", ") : "Нет данных"; 
+                document.getElementById('mismatch_skills').innerText = data.mismatch ? data.mismatch.join(", ") : "Нет данных";
                 document.getElementById('resume_text').innerText = data.resume_text;       
             } catch (error) {
                 console.error('Ошибка при получении данных вакансии:', error);
