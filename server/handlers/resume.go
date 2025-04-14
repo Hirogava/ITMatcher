@@ -333,6 +333,6 @@ func saveResumeSkills(hardSkills []string, softSkills []string, resumeId int, ma
 		return result, nil
 
 	default:
-		return result, fmt.Errorf("Неверно указана роль: %s", role)
+		return result, fmt.Errorf("неверно указана роль: %s", role)
 	}
 }

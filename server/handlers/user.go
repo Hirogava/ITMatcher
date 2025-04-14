@@ -117,7 +117,7 @@ func EditProfile(manager *db.Manager, w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Функцию ниже нужно создать тимохе, это его таск будет
-	id, err := manager.UpdateUser(requestData.Role, requestData.Email, requestData.Username)
+	// id, err := manager.UpdateUser(requestData.Role, requestData.Email, requestData.Username)
 	if err != nil {
 		log.Printf("Ошибка обновления профиля: %v", err)
 		http.Error(w, "Ошибка обновления профиля", http.StatusInternalServerError)
@@ -128,7 +128,7 @@ func EditProfile(manager *db.Manager, w http.ResponseWriter, r *http.Request) {
 	store.Session.Values["role"] = requestData.Role
 	store.Session.Values["username"] = requestData.Username
 	store.Session.Values["email"] = requestData.Email
-	store.Session.Values["user_id"] = id
+	// store.Session.Values["user_id"] = id
 	store.Session.Save(r, w)
 
 	w.Header().Set("Content-Type", "application/json")

@@ -88,6 +88,15 @@ func GetVacancy(w http.ResponseWriter, r *http.Request, manager *db.Manager) {
 		return
 	}
 
+	var vacancySoft []string
+	var vacancyHard []string
+	for _, vacancySkill := range vacancy.HardSkills {
+		vacancyHard = append(vacancyHard, vacancySkill.SkillName)
+	}
+	for _, vacancySkill := range vacancy.SoftSkills {
+		vacancySoft = append(vacancySoft, vacancySkill.SkillName)
+	}
+
 	vacancyData, err := os.Open(filepath.Join("vacancy", strconv.Itoa(vacancyId), "vacancy.txt"))
 	if err != nil {
 		log.Printf("Ошибка открытия файла вакансии: %v", err)
@@ -103,10 +112,15 @@ func GetVacancy(w http.ResponseWriter, r *http.Request, manager *db.Manager) {
 		return
 	}
 
-	vacancy.VacancyText = string(vacancyDataBytes)
+	vacancyJson := map[string]interface{}{
+		"name": vacancy.Name,
+		"vacancy_text": string(vacancyDataBytes),
+		"hard_skills":  vacancyHard,
+		"soft_skills":  vacancySoft,
+	}
 
 	w.Header().Set("Content-Type", "application/json")
-	if err := json.NewEncoder(w).Encode(vacancy); err != nil {
+	if err := json.NewEncoder(w).Encode(vacancyJson); err != nil {
 		log.Printf("Ошибка при записи ответа: %v", err)
 		http.Error(w, fmt.Sprintf("Ошибка при записи ответа: %v", err), http.StatusInternalServerError)
 		return
