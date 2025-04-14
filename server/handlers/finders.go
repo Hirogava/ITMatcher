@@ -26,8 +26,7 @@ func AddFinder(w http.ResponseWriter, r *http.Request, manager *db.Manager) {
 	surName := r.FormValue("sur_name")
 	phone := r.FormValue("phone_number")
 	email := r.FormValue("email")
-	vacancy := r.FormValue("vacancy")
-
+	vacId, err := strconv.Atoi(r.FormValue("vacancy"))
 	hrId := cookies.GetId(r)
 
 	var vacSkills models.VacancySkills
@@ -46,13 +45,6 @@ func AddFinder(w http.ResponseWriter, r *http.Request, manager *db.Manager) {
 	if err != nil {
 		log.Printf("Ошибка создание пользователя: %v", err)
 		http.Error(w, "Ошибка сохранения пользователя", http.StatusInternalServerError)
-		return
-	}
-
-	vacId, err := manager.GetVacancyIdByName(vacancy, *hrId)
-	if err != nil {
-		log.Printf("Ошибка получение id вакансии: %v", err)
-		http.Error(w, "Ошибка получения id вакансии", http.StatusInternalServerError)
 		return
 	}
 
@@ -169,9 +161,9 @@ func GetAnalizedResume(w http.ResponseWriter, r *http.Request, manager *db.Manag
 	}
 
 	jsonResume := map[string]interface{}{
-		"resume_text" : string(resumeFileData),
-		"mismatch" : res.Mismatch,
-		"coincidence" : res.Coincidence,
+		"resume_text": string(resumeFileData),
+		"mismatch":    res.Mismatch,
+		"coincidence": res.Coincidence,
 	}
 
 	w.Header().Set("Content-Type", "application/json")

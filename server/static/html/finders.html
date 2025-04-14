@@ -18,15 +18,22 @@
                             <div class="col-xl-4">                            
                                 <div class="card border rounded mt-1 p-3 px-3">
                                     <h6 class="fw-bold">{{.vacancy.Name}}</h6>
-                                    <p>{{.resume.LastName}} {{.resume.FirstName}} {{.resume.Surname}}<br>Совпадение <span class="text-green">{{.resume.Percent}}%</span></p>
+                                    <p class="mb-1">{{.resume.LastName}} {{.resume.FirstName}} {{.resume.Surname}}<br>Совпадение <span class="text-green">{{.resume.Percent}}%</span></p>
+                                    <div class="col-5 mb-2">
+                                        <a type="button" class="fw-regular" data-bs-toggle="modal" data-bs-target="#finder_info" onclick="finder_info({{.resume.FinderId}}, {{.vacancy.Id}}, {{.resume.FirstName}}, {{.resume.LastName}}, {{.resume.Surname}}, {{.vacancy.Name}})">
+                                            Информация
+                                        </a>
+                                    </div>
                                     <div class="d-flex justify-content-between align-items-center">
+                                        
                                         <div class="col-auto">
                                             <a href="" class="btn btn-success rounded btn-md fw-regular text-white" style="width: auto;">Принять</a>
                                         </div>
                                         <div class="col-auto">
                                             <a href="" class="btn btn-danger rounded btn-md fw-regular text-white" style="width: auto;">Отказать</a>
                                         </div>
-                                    </div>
+                                        
+                                    </div>                                    
                                 </div>
                             </div>
                             {{ end }}       
@@ -66,9 +73,9 @@
                   <!-- ванаси оставляем -->
                 <label for="vanacy" class="fw-medium">Вакансия</label>
                 <select class="form-select" id="vanacy" name="vacancy" aria-label="Вакансия">
-                    <option selected>1. Backend разработчик</option>
-                    <option>1. Backend разработчик</option>
-                    <option>1. Backend разработчик</option>
+                    {{range .vacancies}}
+                    <option value="{{.Id}}">{{.Id}}. {{.Name}}</option>
+                    {{end}}
                 </select>
                 
                 <label for="resume_file" class="fw-medium">Файл резюме</label>
@@ -85,7 +92,62 @@
         </div>
       </div>
 
+      <div class="modal fade" id="finder_info" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h1 class="modal-title fs-5" id="exampleModalLabel">Информация о соискателе</h1>
+              <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+             <h6>ФИО:</h6>
+             <p class="ps-3" id="finder_name"></p>
+
+             <h6>Вакансия:</h6>
+             <p class="ps-3" id="finder_vacancy"></p>
+
+             <h6>Совпадающие навыки:</h6>
+             <p class="ps-3" id="coincidence_skills"></p>
+
+             <h6>Несоответствующие навыки:</h6>
+             <p class="ps-3" id="mismatch_skills"></p>
+
+             <h6>Текст резюме:</h6>
+             <p class="ps-3" id="resume_text"></p>
+            </div>
+            
+          </div>
+        </div>
+    </div>
+
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.5/dist/js/bootstrap.bundle.min.js" integrity="sha384-k6d4wzSIapyDyv1kpU366/PK5hCdSbCRGRCMv+eplOQJWyd1fbcAu9OCUj5zNLiq" crossorigin="anonymous"></script>
+    <script>
+        async function finder_info(finder_id, vacancy_id, first_name, last_name, surname, vacancy_name) {
+            try{
+                const response = await fetch(`/api/hr/finder/${finder_id}/${vacancy_id}`, {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+                });
+
+                if (!response.ok) {
+                    throw new Error(`Ошибка: ${response.status} ${response.statusText}`);
+                }
+
+                const data = await response.json();
+
+                document.getElementById('finder_name').innerText = first_name + " " + last_name + " " + surname;
+                document.getElementById('finder_vacancy').innerText = vacancy_name;
+                document.getElementById('coincidence_skills').innerText = !data ? data.coincidence.join(", ") : "Нет данных"; 
+                document.getElementById('mismatch_skills').innerText = !data ? data.mismatch.join(", ") : "Нет данных";
+                document.getElementById('resume_text').innerText = data.resume_text;       
+            } catch (error) {
+                console.error('Ошибка при получении данных вакансии:', error);
+                alert('Не удалось загрузить данные вакансии.');
+            }
+        }
+    </script>
 </body>
 </html>
 {{end}}

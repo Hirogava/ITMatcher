@@ -85,16 +85,16 @@ func StaticRoutes(r *mux.Router, manager *db.Manager) {
 					return
 				}
 
-				// Добавляем словарь в массив
 				findersData[i] = map[string]interface{}{
 					"resume":  resume,
 					"vacancy": vacancy,
 				}
 			}
-
+			allVacancies, err := manager.GetAllVacancies()
 			data := map[string]interface{}{
 				"pageTitle":    "Вакансии",
 				"finders":      findersData,
+				"vacancies":    allVacancies,
 				"current_page": "finders",
 			}
 
