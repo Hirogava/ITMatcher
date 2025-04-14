@@ -74,7 +74,7 @@ func CreateVacancy(manager *db.Manager, vacancyName string, vacancyFileData []by
 
 func GetVacancy(w http.ResponseWriter, r *http.Request, manager *db.Manager) {
 	vars := mux.Vars(r)
-	vacancyId, err := strconv.Atoi(vars["vacancyId"])
+	vacancyId, err := strconv.Atoi(vars["vacancy_id"])
 	if err != nil {
 		log.Printf("Неверно указан Id: %v", err)
 		http.Error(w, fmt.Sprintf("Неверно указан Id: %v", err), http.StatusBadRequest)
