@@ -23,10 +23,15 @@ import (
 func AddFinder(w http.ResponseWriter, r *http.Request, manager *db.Manager) {
 	firstName := r.FormValue("first_name")
 	lastName := r.FormValue("last_name")
-	surName := r.FormValue("sur_name")
+	surName := r.FormValue("surname")
 	phone := r.FormValue("phone_number")
 	email := r.FormValue("email")
 	vacId, err := strconv.Atoi(r.FormValue("vacancy"))
+	if err != nil {
+		log.Printf("Ошибка получения ID вакансии: %v", err)
+		http.Error(w, "Ошибка получения ID вакансии", http.StatusInternalServerError)
+		return
+	}
 	hrId := cookies.GetId(r)
 
 	var vacSkills models.VacancySkills
@@ -48,7 +53,7 @@ func AddFinder(w http.ResponseWriter, r *http.Request, manager *db.Manager) {
 		return
 	}
 
-	resumeId, err := manager.CreateResumeForHr(finderId, firstName, lastName, surName, phone, email, vacId)
+	resumeId, err := manager.CreateResumeForHr(finderId, firstName, lastName, surName, email, phone, vacId)
 	if err != nil {
 		log.Printf("Ошибка создание резюме: %v", err)
 		http.Error(w, "Ошибка создания резюме", http.StatusInternalServerError)
