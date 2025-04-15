@@ -95,7 +95,7 @@ func AddFinder(w http.ResponseWriter, r *http.Request, manager *db.Manager) {
 		return
 	}
 
-	err = manager.SaveAnalyzedDataForHr(resumeId, vacId, analyzedSkills)
+	err = manager.SaveAnalyzedData("hr", resumeId, vacId, analyzedSkills)
 	if err != nil {
 		log.Printf("Ошибка сохранения анализа навыков: %v", err)
 		http.Error(w, "Ошибка сохранения анализа навыков", http.StatusInternalServerError)
@@ -223,21 +223,24 @@ func AddFinderResume(w http.ResponseWriter, r *http.Request, manager *db.Manager
 		return
 	}
 
-	var topVacs []models.VacancyMatchResult
-	topVacs = GetTopMatchingVacancies(resumeSkills, manager)
-	if len(topVacs) >= 3 {
+	topVacs, err := GetTopMatchingVacancies(resumeSkills, manager)
+	if len(topVacs) >= 3 && err != nil {
 		err = manager.UpdateUserResumesWithTopVacancies(resumeId, topVacs)
 		if err != nil {
 			log.Printf("Ошибка сохранения топ-3 вакансий: %v", err)
-			w.Write([]byte("Афигеть: " + err.Error()))
+			http.Error(w, fmt.Sprintf("Ошибка сохранения топ-3 вакансий: %v", err), http.StatusInternalServerError)
 			return
 		}
+	} else if err != nil {
+		log.Printf("Ошибка получения топ-3 вакансий: %v", err)
+		http.Error(w, fmt.Sprintf("Ошибка получения топ-3 вакансий: %v", err), http.StatusInternalServerError)
+		return
 	}
 	for _, vac := range topVacs {
-		err = manager.SaveAnalyzedDataForUser(resumeId, vac.VacancyId, vac.FinalSkills)
+		err = manager.SaveAnalyzedData("users", resumeId, vac.VacancyId, vac.FinalSkills)
 		if err != nil {
 			log.Printf("Ошибка сохранения данных аналитики: %v", err)
-			w.Write([]byte("Афигеть: " + err.Error()))
+			http.Error(w, fmt.Sprintf("Ошибка сохранения данных аналитики: %v", err), http.StatusInternalServerError)
 			return
 		}
 	}
@@ -247,11 +250,11 @@ func AddFinderResume(w http.ResponseWriter, r *http.Request, manager *db.Manager
 	w.WriteHeader(http.StatusOK)
 }
 
-func GetTopMatchingVacancies(resumeSkills models.ResumeSkills, manager *db.Manager) []models.VacancyMatchResult {
+func GetTopMatchingVacancies(resumeSkills models.ResumeSkills, manager *db.Manager) ([]models.VacancyMatchResult, error) {
 	vacancies, err := manager.GetAllVacancies()
 	if err != nil {
 		log.Printf("Ошибка получения списка вакансий: %v", err)
-		return []models.VacancyMatchResult{}
+		return nil, err
 	}
 
 	var results []models.VacancyMatchResult
@@ -281,7 +284,7 @@ func GetTopMatchingVacancies(resumeSkills models.ResumeSkills, manager *db.Manag
 		return results[i].MatchRate > results[j].MatchRate
 	})
 
-	return results
+	return results, err
 }
 
 type UserResumeInfo struct {
@@ -299,10 +302,9 @@ func GetFinderResume(w http.ResponseWriter, r *http.Request, manager *db.Manager
 	resume_id := vars["resume_id"]
 	resumeId, _ := strconv.Atoi(resume_id)
 
-	resume_hard_skills, resume_soft_skills, _ := manager.GetSkillsFromUserResume(resumeId)
 	var result UserResumeInfo
-	result.SoftSkills = resume_soft_skills
-	result.HardSkills = resume_hard_skills
+	result.HardSkills, result.SoftSkills, _ = manager.GetSkillsFromUserResume(resumeId)
+	
 	vacancies_id, _ := manager.GetResumeUserVacancies(resumeId)
 	for _, vacancy_id := range vacancies_id {
 		percent, name, _ := manager.GetSuperDuperSecretAnonymousBitcoinWalletUnderUSAProtectionSkillAssPercentMatch(resumeId, vacancy_id)

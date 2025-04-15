@@ -213,7 +213,7 @@ func SendResume(w http.ResponseWriter, r *http.Request, manager *db.Manager) {
 		return
 	}
 
-	err = manager.SaveAnalyzedDataForHr(resumeId, vacId, analyzedSkills)
+	err = manager.SaveAnalyzedData("hr", resumeId, vacId, analyzedSkills)
 	if err != nil {
 		http.Error(w, fmt.Sprintf("Ошибка при записи в базу данных: %v", err), http.StatusInternalServerError)
 		return

@@ -196,56 +196,32 @@ func (manager *Manager) GetAllResumesForHr(hr_id int) ([]Resume, error) {
 	return resumes, nil
 }
 
-func (manager *Manager) SaveAnalyzedDataForHr(resumeId int, vacancyId int, analyzedSkills models.FinalSkills) error {
+func (manager *Manager) SaveAnalyzedData(role string, resumeId int, vacancyId int, analyzedSkills models.FinalSkills) error {
 	var id int
-	query := "INSERT INTO hr_skill_analysis (resume_id, vacancy_id, percent_match) VALUES ($1, $2, $3) RETURNING id"
+	if role == "users" {
+		role = "user"
+	}
+	query := fmt.Sprintf("INSERT INTO %s_skill_analysis (resume_id, vacancy_id, percent_match) VALUES ($1, $2, $3) RETURNING id", role)
 	err := manager.Conn.QueryRow(query, resumeId, vacancyId, analyzedSkills.Percent).Scan(&id)
 	if err != nil {
 		return err
 	}
 
-	err = manager.insertAnalyzedSkills("hr_analysis_hard_skills", id, analyzedSkills, true, "hard")
+	err = manager.insertAnalyzedSkills(fmt.Sprintf("%s_analysis_hard_skills", role), id, analyzedSkills, true, "hard")
 	if err != nil {
 		return err
 	}
-	err = manager.insertAnalyzedSkills("hr_analysis_soft_skills", id, analyzedSkills, true, "soft")
-	if err != nil {
-		return err
-	}
-	err = manager.insertAnalyzedSkills("hr_analysis_hard_skills", id, analyzedSkills, false, "hard")
-	if err != nil {
-		return err
-	}
-	err = manager.insertAnalyzedSkills("hr_analysis_soft_skills", id, analyzedSkills, false, "soft")
+	err = manager.insertAnalyzedSkills(fmt.Sprintf("%s_analysis_soft_skills", role), id, analyzedSkills, true, "soft")
 	if err != nil {
 		return err
 	}
 
-	return nil
-}
-
-// pizdec STbIdno..
-func (manager *Manager) SaveAnalyzedDataForUser(resumeId int, vacancyId int, analyzedSkills models.FinalSkills) error {
-	var id int
-	query := "INSERT INTO user_skill_analysis (resume_id, vacancy_id, percent_match) VALUES ($1, $2, $3) RETURNING id"
-	err := manager.Conn.QueryRow(query, resumeId, vacancyId, analyzedSkills.Percent).Scan(&id)
+	err = manager.insertAnalyzedSkills(fmt.Sprintf("%s_analysis_hard_skills", role), id, analyzedSkills, false, "hard")
 	if err != nil {
 		return err
 	}
 
-	err = manager.insertAnalyzedSkills("user_analysis_hard_skills", id, analyzedSkills, true, "hard")
-	if err != nil {
-		return err
-	}
-	err = manager.insertAnalyzedSkills("user_analysis_soft_skills", id, analyzedSkills, true, "soft")
-	if err != nil {
-		return err
-	}
-	err = manager.insertAnalyzedSkills("user_analysis_hard_skills", id, analyzedSkills, false, "hard")
-	if err != nil {
-		return err
-	}
-	err = manager.insertAnalyzedSkills("user_analysis_soft_skills", id, analyzedSkills, false, "soft")
+	err = manager.insertAnalyzedSkills(fmt.Sprintf("%s_analysis_soft_skills", role), id, analyzedSkills, false, "soft")
 	if err != nil {
 		return err
 	}
@@ -562,7 +538,7 @@ func (manager *Manager) GetVacancySkills(vacancyId int) ([]models.VacancyHardSki
 	var softSkills []models.VacancySoftSkill
 
 	query := `SELECT hs.id, hs.hard_skill
-	FROM vacantion_hard_skills vhs
+	FROM middle_hard_skills vhs
 	JOIN hard_skills hs ON vhs.hard_skill_id = hs.id
 	WHERE vhs.vacancy_id = $1`
 
@@ -582,7 +558,7 @@ func (manager *Manager) GetVacancySkills(vacancyId int) ([]models.VacancyHardSki
 	}
 
 	query = `SELECT ss.id, ss.soft_skill
-	FROM vacantion_soft_skills vss
+	FROM middle_soft_skills vss
 	JOIN soft_skills ss ON vss.soft_skill_id = ss.id
 	WHERE vss.vacancy_id = $1`
 
@@ -631,7 +607,7 @@ func (manager *Manager) CreateResumeForUser(user_id int) (int, error) {
 }
 
 func (manager *Manager) GetSuperDuperSecretAnonymousBitcoinWalletUnderUSAProtectionSkillAssPercentMatch(superdupersecretResumeId int, superdupersecretsupermanVacancyId int) (int, string, error) {
-	query := "SELECT USA.id, v.name, USA.percent_match FROM user_skill_analysis USA INNER JOIN vacancies v ON USA.vacancy_id = v.id WHERE USA.resume_id = $1 AND USA.vacancy_id = $2;"
+	query := "SELECT USA.id, v.name, USA.percent_match FROM user_skill_analysis USA INNER JOIN middle_vacancies v ON USA.vacancy_id = v.id WHERE USA.resume_id = $1 AND USA.vacancy_id = $2;"
 	var USAID int
 	var PercentMatch int
 	var VacancyName string
@@ -712,7 +688,7 @@ func (manager *Manager) GetUserResumes(userId int) ([]models.UserResumeInfo, err
 		LEFT JOIN
 			user_skill_analysis usa ON ur.id = usa.resume_id
 		LEFT JOIN
-			vacancies v ON usa.vacancy_id = v.id
+			middle_vacancies v ON usa.vacancy_id = v.id
 		WHERE
 			ur.user_id = $1
 		ORDER BY
