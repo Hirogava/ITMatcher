@@ -7,8 +7,6 @@ import (
 	"gaspr/services/cookies"
 	"log"
 	"net/http"
-
-	"github.com/gorilla/sessions"
 )
 
 func Login(manager *db.Manager, w http.ResponseWriter, r *http.Request) {
