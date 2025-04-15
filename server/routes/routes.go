@@ -66,7 +66,7 @@ func StaticRoutes(r *mux.Router, manager *db.Manager) {
 		tmpl.ExecuteTemplate(w, "base", data)
 	})
 
-	r.Handle("/finders", middleware.AuthRequired("hr",
+	r.Handle("/hr/finders", middleware.AuthRequired("hr",
 		http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			tmpl := GetTemplate("finders")
 
@@ -102,7 +102,7 @@ func StaticRoutes(r *mux.Router, manager *db.Manager) {
 		})))
 
 	// хряк WW
-	r.Handle("/hracc", middleware.AuthRequired("hr",
+	r.Handle("/hr/acc", middleware.AuthRequired("hr",
 		http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			tmpl := GetTemplate("hr_account")
 			store := cookies.NewCookieManager(r)
@@ -119,7 +119,7 @@ func StaticRoutes(r *mux.Router, manager *db.Manager) {
 			tmpl.ExecuteTemplate(w, "base", data)
 		})))
 
-	r.Handle("/vacancies", middleware.AuthRequired("hr",
+	r.Handle("/hr/vacancies", middleware.AuthRequired("hr",
 		http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			tmpl := GetTemplate("vacancies")
 
@@ -136,5 +136,19 @@ func StaticRoutes(r *mux.Router, manager *db.Manager) {
 			}
 
 			tmpl.ExecuteTemplate(w, "base", data)
+		})))
+
+	/*
+	User сторона
+	*/
+	
+	r.Handle("/user/acc", middleware.AuthRequired("users",
+		http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			// Тут доделаешь шаблон
+		})))
+
+	r.Handle("/user/resumes", middleware.AuthRequired("users",
+		http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			// тут тоеже
 		})))
 }

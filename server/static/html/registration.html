@@ -109,9 +109,17 @@
                 });
 
                 if (response.ok) {
-                    const result = await response.json();
-                    alert("Регистрация успешна!");
-                    window.location.href = "/hracc";
+                    if (regType === 'hr') {
+                        const result = await response.json();
+                        console.log('Успешный вход:', result);
+                        alert('Вход прошел успешно!');
+                        window.location.href = "/hr/acc";
+                    } else if (regType === 'users') {
+                        const result = await response.json();
+                        console.log('Успешный вход:', result);
+                        alert('Вход прошел успешно!');
+                        window.location.href = "/user/acc";
+                    }
                 } else {
                     const error = await response.json();
                     alert("Ошибка: " + (error.message || "Неизвестная ошибка"));

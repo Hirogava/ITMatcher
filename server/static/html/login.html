@@ -98,10 +98,17 @@
                 });
 
             if (response.ok) {
-                const result = await response.json();
-                console.log('Успешный вход:', result);
-                alert('Вход прошел успешно!');
-                window.location.href = "/hracc";
+                if (regType === 'hr') {
+                    const result = await response.json();
+                    console.log('Успешный вход:', result);
+                    alert('Вход прошел успешно!');
+                    window.location.href = "/hr/acc";
+                } else if (regType === 'users') {
+                    const result = await response.json();
+                    console.log('Успешный вход:', result);
+                    alert('Вход прошел успешно!');
+                    window.location.href = "/user/acc";
+                }
             } else {
                 const error = await response.json();
                 console.error('Ошибка входа:', error);

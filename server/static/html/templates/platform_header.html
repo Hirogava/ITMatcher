@@ -20,24 +20,24 @@
                 <ul class="nav flex-column mb-auto mt-5">
                     <li class="nav-item">
                         {{ if eq .current_page "vacancies" }}
-                            <a class="nav-link active fw-black text-decoration-underline text-black" href="/vacancies">• Вакансии</a>
+                            <a class="nav-link active fw-black text-decoration-underline text-black" href="/hr/vacancies">• Вакансии</a>
                         {{ else }}
-                            <a class="nav-link" href="/vacancies">Вакансии</a>
+                            <a class="nav-link" href="/hr/vacancies">Вакансии</a>
                         {{ end }}
                     </li>
                     <li class="nav-item">
                         {{ if eq .current_page "finders" }}
-                            <a class="nav-link active fw-black text-decoration-underline text-black" href="/finders">• Соискатели</a>
+                            <a class="nav-link active fw-black text-decoration-underline text-black" href="/hr/finders">• Соискатели</a>
                         {{ else }}
-                            <a class="nav-link" href="/finders">Соискатели</a>
+                            <a class="nav-link" href="/hr/finders">Соискатели</a>
                         {{ end }}
                     </li>
                 </ul>
                 <div class="px-2 nav-link mt-auto d-flex">
                     {{ if eq .current_page "hr_account" }}
-                        <a class="px-2 nav-link mt-auto nav-link fw-black text-decoration-underline text-black" href="/hracc">hheys</a>
+                        <a class="px-2 nav-link mt-auto nav-link fw-black text-decoration-underline text-black" href="/hr/acc">hheys</a>
                     {{ else }}
-                    <a class="px-2 nav-link mt-auto nav-link" href="/hracc">hheys</a>
+                    <a class="px-2 nav-link mt-auto nav-link" href="/hr/acc">hheys</a>
                     {{ end }}
                     
                     <a class="px-2 nav-link text-danger mt-auto ms-auto text-decoration-underline" href="/api/logout">Выйти</a>
@@ -49,14 +49,14 @@
             <a class="navbar-brand color-primary fs-3 text-center" href="/">LOGO</a>
                 <ul class="nav flex-column mb-auto">
                     <li class="nav-item">
-                        <a class="nav-link" href="/vacancies">Вакансии</a>
+                        <a class="nav-link" href="/hr/vacancies">Вакансии</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="/finders">Соискатели</a>
+                        <a class="nav-link" href="/hr/finders">Соискатели</a>
                     </li>
                 </ul>
                 <div class="px-2 nav-link mt-auto d-flex">
-                    <a class="px-2 nav-link mt-auto nav-link fw-black text-decoration-underline text-black" href="/hracc">hheys</a>
+                    <a class="px-2 nav-link mt-auto nav-link fw-black text-decoration-underline text-black" href="/hr/acc">hheys</a>
                     <a class="px-2 nav-link text-danger mt-auto ms-auto text-decoration-underline" href="/api/logout">Выйти</a>
                 </div>
         </div>
