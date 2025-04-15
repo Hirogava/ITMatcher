@@ -54,7 +54,7 @@
               <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
-              <form action="/api/hr/add_finder" method="post" enctype="multipart/form-data">
+              <form action="/api/hr/add_finder" method="post" enctype="multipart/form-data" id="addFinderForm">
                 <label for="first_name" class="fw-medium">Имя</label>
                 <input type="text" id="first_name" name="first_name" class="form-control mb-3" placeholder="Имя" required>
 
@@ -147,6 +147,27 @@
                 alert('Не удалось загрузить данные вакансии.');
             }
         }
+
+        document.getElementById('addFinderForm').addEventListener('submit', async function (event) {
+                    event.preventDefault();
+                    const formData = new FormData(this);
+
+                    try {
+                        const response = await fetch('/api/hr/add_finder', {
+                            method: 'POST',
+                            body: formData
+                        });
+
+                        if (response.ok) {
+                            location.reload();
+                        } else {
+                            const errorText = await response.text();
+                            alert(`Ошибка: ${errorText}`);
+                        }
+                    } catch (error) {
+                        alert(`Ошибка: ${error.message}`);
+                    }
+                });
     </script>
 </body>
 </html>
