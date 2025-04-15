@@ -11,16 +11,16 @@
             </div>
 
             <div class="p-3">
-                {{if .hr_account}}
+                {{if .account.HR}}
                 <label class="fw-bold my-1">Личная информация</label>
                 <div class="row">
                     <div class="col-lg-4">
                         <label for="" class="fw-medium">Имя пользователя</label>
-                        <input type="email" id="email" name="email" class="form-control mb-3" value="{{.hr_account.username}}" disabled>
+                        <input type="email" id="email" name="email" class="form-control mb-3" value="{{.account.HR.Username}}" disabled>
                     </div>
                     <div class="col-lg-4">
                         <label for="" class="fw-medium">Email</label>
-                        <input type="email" id="email" name="email" class="form-control mb-3" value="{{.hr_account.email}}" disabled>
+                        <input type="email" id="email" name="email" class="form-control mb-3" value="{{.account.HR.Email}}" disabled>
                     </div>
                 </div>
 
@@ -36,7 +36,7 @@
                     <label class="fw-bold my-1">Связь с сервисами</label>
                     <div class="col-lg-4">
                         <label for="" class="fw-medium">hh.ru</label>
-                        <input type="email" id="email" name="email" class="form-control mb-3" value="hheys" disabled>
+                        <input type="email" id="email" name="email" class="form-control mb-3" value="-" disabled>
                     </div>
                 </div>
                 {{else}}

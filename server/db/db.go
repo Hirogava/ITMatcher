@@ -346,18 +346,11 @@ func (manager *Manager) CreateUserResumeSoftSkill(resumeId int, skillId int) err
 /*
 HR
 */
-
-type HR struct {
-	ID       int
-	Username string
-	Email    string
-}
-
-func (manager *Manager) GetHrInfoById(hr_id int) (HR, error) {
-	var hr HR
+func (manager *Manager) GetHrInfoById(hr_id int) (models.HR, error) {
+	var hr models.HR
 	err := manager.Conn.QueryRow("SELECT id, username, email FROM hr WHERE id = $1", hr_id).Scan(&hr.ID, &hr.Username, &hr.Email)
 	if err != nil {
-		return HR{}, err
+		return models.HR{}, err
 	}
 	return hr, nil
 }

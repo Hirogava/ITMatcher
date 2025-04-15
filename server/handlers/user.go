@@ -96,25 +96,25 @@ func Register(manager *db.Manager, w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(map[string]string{"message": "Успешная регистрация"})
 }
 
-func EditProfile(manager *db.Manager, w http.ResponseWriter, r *http.Request) {
-	if r.Header.Get("Content-Type") != "application/json" {
-		log.Println("Неверный формат ответа")
-		http.Error(w, "Content-Type должен быть application/json", http.StatusBadRequest)
-		return
-	}
+// func EditProfile(manager *db.Manager, w http.ResponseWriter, r *http.Request) {
+// 	if r.Header.Get("Content-Type") != "application/json" {
+// 		log.Println("Неверный формат ответа")
+// 		http.Error(w, "Content-Type должен быть application/json", http.StatusBadRequest)
+// 		return
+// 	}
 
-	var requestData struct {
-		Role     string `json:"role"`
-		Email    string `json:"email"`
-		Username string `json:"username,omitempty"`
-	}
+// 	var requestData struct {
+// 		Role     string `json:"role"`
+// 		Email    string `json:"email"`
+// 		Username string `json:"username,omitempty"`
+// 	}
 
-	err := json.NewDecoder(r.Body).Decode(&requestData)
-	if err != nil {
-		log.Printf("Неверный формат JSON: %v", err)
-		http.Error(w, "Неверный формат JSON", http.StatusBadRequest)
-		return
-	}
+// 	err := json.NewDecoder(r.Body).Decode(&requestData)
+// 	if err != nil {
+// 		log.Printf("Неверный формат JSON: %v", err)
+// 		http.Error(w, "Неверный формат JSON", http.StatusBadRequest)
+// 		return
+// 	}
 
 	userId := cookies.GetId(r)
 	err = manager.UpdateUser(requestData.Role, requestData.Email, requestData.Username, *userId)
@@ -130,7 +130,7 @@ func EditProfile(manager *db.Manager, w http.ResponseWriter, r *http.Request) {
 	store.Session.Values["email"] = requestData.Email
 	store.Session.Save(r, w)
 
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(map[string]string{"message": "Успешное обновление данных"})
-}
+// 	w.Header().Set("Content-Type", "application/json")
+// 	w.WriteHeader(http.StatusOK)
+// 	json.NewEncoder(w).Encode(map[string]string{"message": "Успешное обновление данных"})
+// }
