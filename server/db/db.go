@@ -312,8 +312,6 @@ func (manager *Manager) insertAnalyzedSkills(table string, id int, analyzedSkill
 	return nil
 }
 
-
-
 func (manager *Manager) CreateResumeForHr(finderId int, firstName, lastName, surName, email, phoneNumber string, vacancyId int) (int, error) {
 	var resumeId int
 	query := "INSERT INTO resumes (finder_id, first_name, last_name, surname, email, phone_number, vacancy_id) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id"
@@ -581,4 +579,27 @@ func (manager *Manager) UpdateUserResumesWithTopVacancies(Id int, topVacs []mode
 
 	_, err := manager.Conn.Exec(query, vac1, vac2, vac3, Id)
 	return err
+}
+
+func (manager *Manager) UpdateUser(role string, email string, username string, userId int) error {
+	if role == "hr" {
+		query := `
+			UPDATE hr
+			SET email = $1, username = $2
+			WHERE id = $3`
+		_, err := manager.Conn.Exec(query, email, username, userId)
+		if err != nil {
+			return err
+		}
+	} else if role == "users" {
+		query := `
+			UPDATE users
+			SET email = $1
+			WHERE id = $2`
+		_, err := manager.Conn.Exec(query, email, userId)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
 }
