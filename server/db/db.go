@@ -630,15 +630,16 @@ func (manager *Manager) CreateResumeForUser(user_id int) (int, error) {
 	return resumeId, nil
 }
 
-func (manager *Manager) GetSuperDuperSecretAnonymousBitcoinWalletUnderUSAProtectionSkillAssPercentMatch(superdupersecretResumeId int, superdupersecretsupermanVacancyId int) (int, error) {
-	query := "SELECT USA.id, USA.percent_match FROM user_skill_analysis USA WHERE USA.resume_id = $1 AND USA.vacancy_id = $2;"
+func (manager *Manager) GetSuperDuperSecretAnonymousBitcoinWalletUnderUSAProtectionSkillAssPercentMatch(superdupersecretResumeId int, superdupersecretsupermanVacancyId int) (int, string, error) {
+	query := "SELECT USA.id, v.name, USA.percent_match FROM user_skill_analysis USA INNER JOIN vacancies v ON USA.vacancy_id = v.id WHERE USA.resume_id = $1 AND USA.vacancy_id = $2;"
 	var USAID int
 	var PercentMatch int
-	err := manager.Conn.QueryRow(query, superdupersecretResumeId, superdupersecretsupermanVacancyId).Scan(&USAID, &PercentMatch)
+	var VacancyName string
+	err := manager.Conn.QueryRow(query, superdupersecretResumeId, superdupersecretsupermanVacancyId).Scan(&USAID, &VacancyName, &PercentMatch)
 	if err != nil {
-		return 0, err
+		return 0, "", err
 	}
-	return PercentMatch, nil
+	return PercentMatch, VacancyName, nil
 }
 
 func (manager *Manager) GetResumeUserVacancies(resumeId int) ([]int, error) {

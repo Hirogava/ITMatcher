@@ -284,23 +284,38 @@ func GetTopMatchingVacancies(resumeSkills models.ResumeSkills, manager *db.Manag
 	return results
 }
 
-func GetUserResumes(w http.ResponseWriter, r *http.Request, manager *db.Manager) {
-	userId := cookies.GetId(r)
-	if userId == nil {
-		http.Error(w, "Пользователь не авторизован", http.StatusUnauthorized)
-		return
+type UserResumeInfo struct {
+	HardSkills []string
+	SoftSkills []string
+	Vacancies  []struct {
+		Name    string
+		Percent int
+		Skills  models.AnalyzedSkills
 	}
+}
 
-	//resumes, err := manager.GetResumesByUserId(*userId)
-	//if err != nil {
-	//	log.Printf("Ошибка получения резюме пользователя: %v", err)
-	//	http.Error(w, "Ошибка получения резюме", http.StatusInternalServerError)
-	//	return
-	//}
-	//
-	//w.Header().Set("Content-Type", "application/json")
-	//if err := json.NewEncoder(w).Encode(resumes); err != nil {
-	//	log.Printf("Ошибка кодирования JSON: %v", err)
-	//	http.Error(w, "Ошибка обработки данных", http.StatusInternalServerError)
-	//}
+func GetFinderResume(w http.ResponseWriter, r *http.Request, manager *db.Manager) {
+	vars := mux.Vars(r)
+	resume_id := vars["resume_id"]
+	resumeId, _ := strconv.Atoi(resume_id)
+
+	resume_hard_skills, resume_soft_skills, _ := manager.GetSkillsFromUserResume(resumeId)
+	var result UserResumeInfo
+	result.SoftSkills = resume_soft_skills
+	result.HardSkills = resume_hard_skills
+	vacancies_id, _ := manager.GetResumeUserVacancies(resumeId)
+	for _, vacancy_id := range vacancies_id {
+		percent, name, _ := manager.GetSuperDuperSecretAnonymousBitcoinWalletUnderUSAProtectionSkillAssPercentMatch(resumeId, vacancy_id)
+		skills, _ := manager.GetAnalizedUserData(resumeId, vacancy_id)
+		result.Vacancies = append(result.Vacancies, struct {
+			Name    string
+			Percent int
+			Skills  models.AnalyzedSkills
+		}{
+			Name:    name,
+			Percent: percent,
+			Skills:  skills,
+		})
+	}
+	json.NewEncoder(w).Encode(result)
 }

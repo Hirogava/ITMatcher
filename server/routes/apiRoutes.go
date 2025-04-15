@@ -6,14 +6,11 @@ import (
 	"gaspr/db"
 	"gaspr/handlers"
 	"gaspr/handlers/middlewares"
-	"gaspr/models"
 	"gaspr/services/ai"
 	"gaspr/services/cookies"
+	"github.com/gorilla/mux"
 	"io"
 	"net/http"
-	"strconv"
-
-	"github.com/gorilla/mux"
 )
 
 func ApiRoutes(r *mux.Router, manager *db.Manager) {
@@ -106,46 +103,13 @@ func ApiRoutes(r *mux.Router, manager *db.Manager) {
 	*/
 	r.Handle("/api/finder/resumes", middleware.AuthRequired("users",
 		http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			//handlers.ResumesList(w, r, manager)
-			list, _ := manager.GetUserResumes(*cookies.GetId(r))
+			list, _ := manager.GetUserResumes(*cookies.GetId(r)) // можно и в темплейт сунуть наверное не знаю
 			json.NewEncoder(w).Encode(list)
 		}))).Methods(http.MethodGet)
 
-	type UserResumeInfo struct {
-		HardSkills []string
-		SoftSkills []string
-		Vacancies  []struct {
-			Percent int
-			Skills  models.AnalyzedSkills
-		}
-	}
-
-	// навыки резюме, подходящие вакансии, их проценты и их навыки
 	r.Handle("/api/finder/resume/{resume_id}", middleware.AuthRequired("users",
 		http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			//handlers.ResumesList(w, r, manager)
-			vars := mux.Vars(r)
-			resume_id := vars["resume_id"]
-			resumeId, _ := strconv.Atoi(resume_id)
-
-			resume_hard_skills, resume_soft_skills, _ := manager.GetSkillsFromUserResume(resumeId)
-			var result UserResumeInfo
-			result.SoftSkills = resume_soft_skills
-			result.HardSkills = resume_hard_skills
-			vacancies_id, _ := manager.GetResumeUserVacancies(resumeId)
-			for _, vacancy_id := range vacancies_id {
-				percent, _ := manager.GetSuperDuperSecretAnonymousBitcoinWalletUnderUSAProtectionSkillAssPercentMatch(resumeId, vacancy_id)
-				skills, _ := manager.GetAnalizedUserData(resumeId, vacancy_id)
-				result.Vacancies = append(result.Vacancies, struct {
-					Percent int
-					Skills  models.AnalyzedSkills
-				}{
-					Percent: percent,
-					Skills:  skills,
-				})
-			}
-			json.NewEncoder(w).Encode(result)
-
+			handlers.GetFinderResume(w, r, manager)
 		}))).Methods(http.MethodGet)
 
 	r.Handle("/api/finder/add_resume", middleware.AuthRequired("users",
