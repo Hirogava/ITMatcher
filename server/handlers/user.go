@@ -116,19 +116,19 @@ func Register(manager *db.Manager, w http.ResponseWriter, r *http.Request) {
 // 		return
 // 	}
 
-	userId := cookies.GetId(r)
-	err = manager.UpdateUser(requestData.Role, requestData.Email, requestData.Username, *userId)
-	if err != nil {
-		log.Printf("Ошибка обновления профиля: %v", err)
-		http.Error(w, "Ошибка обновления профиля", http.StatusInternalServerError)
-		return
-	}
+// userId := cookies.GetId(r)
+// err = manager.UpdateUser(requestData.Role, requestData.Email, requestData.Username, *userId)
+// if err != nil {
+// 	log.Printf("Ошибка обновления профиля: %v", err)
+// 	http.Error(w, "Ошибка обновления профиля", http.StatusInternalServerError)
+// 	return
+// }
 
-	store := cookies.NewCookieManager(r)
-	store.Session.Values["role"] = requestData.Role
-	store.Session.Values["username"] = requestData.Username
-	store.Session.Values["email"] = requestData.Email
-	store.Session.Save(r, w)
+// store := cookies.NewCookieManager(r)
+// store.Session.Values["role"] = requestData.Role
+// store.Session.Values["username"] = requestData.Username
+// store.Session.Values["email"] = requestData.Email
+// store.Session.Save(r, w)
 
 // 	w.Header().Set("Content-Type", "application/json")
 // 	w.WriteHeader(http.StatusOK)
