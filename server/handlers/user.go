@@ -7,6 +7,8 @@ import (
 	"gaspr/services/cookies"
 	"log"
 	"net/http"
+
+	"github.com/gorilla/sessions"
 )
 
 func Login(manager *db.Manager, w http.ResponseWriter, r *http.Request) {
@@ -116,8 +118,9 @@ func EditProfile(manager *db.Manager, w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// userId := cookies.GetId(r)
 	// Функцию ниже нужно создать тимохе, это его таск будет
-	// id, err := manager.UpdateUser(requestData.Role, requestData.Email, requestData.Username)
+	// id, err := manager.UpdateUser(requestData.Role, requestData.Email, requestData.Username, userId)
 	if err != nil {
 		log.Printf("Ошибка обновления профиля: %v", err)
 		http.Error(w, "Ошибка обновления профиля", http.StatusInternalServerError)
