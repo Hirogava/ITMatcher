@@ -156,6 +156,34 @@ CREATE TABLE "user_resume_hard" (
   "resume_id" integer
 );
 
+CREATE TABLE "user_skill_analysis" (
+    "id" serial PRIMARY KEY,
+    "resume_id" integer NOT NULL,
+    "vacancy_id" integer NOT NULL,
+    "percent_match" integer,
+    "created_at" timestamp DEFAULT now(),
+    FOREIGN KEY ("resume_id") REFERENCES "user_resumes" ("id"),
+    FOREIGN KEY ("vacancy_id") REFERENCES "vacancies" ("id")
+);
+
+CREATE TABLE "user_analysis_hard_skills" (
+    "id" serial PRIMARY KEY,
+    "analysis_id" integer,
+    "hard_skill_id" integer,
+    "matched" boolean,
+    FOREIGN KEY ("analysis_id") REFERENCES "user_skill_analysis" ("id"),
+    FOREIGN KEY ("hard_skill_id") REFERENCES "hard_skills" ("id")
+);
+
+CREATE TABLE "user_analysis_soft_skills" (
+    "id" serial PRIMARY KEY,
+    "analysis_id" integer,
+    "soft_skill_id" integer,
+    "matched" boolean,
+    FOREIGN KEY ("analysis_id") REFERENCES "user_skill_analysis" ("id"),
+    FOREIGN KEY ("soft_skill_id") REFERENCES "soft_skills" ("id")
+);
+
 ALTER TABLE "vacantion_hard_skills" ADD FOREIGN KEY ("vacancy_id") REFERENCES "vacancies" ("id");
 
 ALTER TABLE "vacantion_soft_skills" ADD FOREIGN KEY ("vacancy_id") REFERENCES "vacancies" ("id");

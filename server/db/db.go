@@ -224,6 +224,84 @@ func (manager *Manager) SaveAnalyzedDataForHr(resumeId int, vacancyId int, analy
 	return nil
 }
 
+// pizdec STbIdno..
+func (manager *Manager) SaveAnalyzedDataForUser(resumeId int, vacancyId int, analyzedSkills models.FinalSkills) error {
+	var id int
+	query := "INSERT INTO user_skill_analysis (resume_id, vacancy_id, percent_match) VALUES ($1, $2, $3) RETURNING id"
+	err := manager.Conn.QueryRow(query, resumeId, vacancyId, analyzedSkills.Percent).Scan(&id)
+	if err != nil {
+		return err
+	}
+
+	err = manager.insertAnalyzedSkills("user_analysis_hard_skills", id, analyzedSkills, true, "hard")
+	if err != nil {
+		return err
+	}
+	err = manager.insertAnalyzedSkills("user_analysis_soft_skills", id, analyzedSkills, true, "soft")
+	if err != nil {
+		return err
+	}
+	err = manager.insertAnalyzedSkills("user_analysis_hard_skills", id, analyzedSkills, false, "hard")
+	if err != nil {
+		return err
+	}
+	err = manager.insertAnalyzedSkills("user_analysis_soft_skills", id, analyzedSkills, false, "soft")
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (manager *Manager) GetAnalizedUserData(resumeId int, vacancyId int) (models.AnalyzedSkills, error) {
+	query := `
+	(
+	  SELECT hs.hard_skill AS skill, ahs.matched
+	  FROM user_analysis_hard_skills ahs
+	  JOIN hard_skills hs ON ahs.hard_skill_id = hs.id
+	  JOIN user_skill_analysis hsa ON ahs.analysis_id = hsa.id
+	  WHERE hsa.resume_id = $1 AND hsa.vacancy_id = $2
+	)
+	UNION ALL
+	(
+	  SELECT ss.soft_skill AS skill, zhopa.matched
+	  FROM user_analysis_soft_skills zhopa
+	  JOIN soft_skills ss ON zhopa.soft_skill_id = ss.id
+	  JOIN user_skill_analysis hsa ON zhopa.analysis_id = hsa.id
+	  WHERE hsa.resume_id = $1 AND hsa.vacancy_id = $2
+	)
+	`
+
+	rows, err := manager.Conn.Query(query, resumeId, vacancyId)
+	if err != nil {
+		return models.AnalyzedSkills{}, err
+	}
+	defer rows.Close()
+
+	var result models.AnalyzedSkills
+
+	for rows.Next() {
+		var skill string
+		var matched bool
+
+		if err := rows.Scan(&skill, &matched); err != nil {
+			return models.AnalyzedSkills{}, err
+		}
+
+		if matched {
+			result.Coincidence = append(result.Coincidence, skill)
+		} else {
+			result.Mismatch = append(result.Mismatch, skill)
+		}
+	}
+
+	if err = rows.Err(); err != nil {
+		return models.AnalyzedSkills{}, err
+	}
+
+	return result, nil
+}
+
 func (manager *Manager) GetAnalizedData(finderId int, vacancyId int) (models.AnalyzedSkills, error) {
 	query := `
 	(
@@ -242,7 +320,7 @@ func (manager *Manager) GetAnalizedData(finderId int, vacancyId int) (models.Ana
 	  WHERE hsa.resume_id = $1 AND hsa.vacancy_id = $2
 	)
 	`
-
+	// finderId на самом деле resume_id чзх
 	rows, err := manager.Conn.Query(query, finderId, vacancyId)
 	if err != nil {
 		return models.AnalyzedSkills{}, err
@@ -557,6 +635,149 @@ func (manager *Manager) CreateResumeForUser(user_id int) (int, error) {
 		return 0, err
 	}
 	return resumeId, nil
+}
+
+func (manager *Manager) GetSuperDuperSecretAnonymousBitcoinWalletUnderUSAProtectionSkillAssPercentMatch(superdupersecretResumeId int, superdupersecretsupermanVacancyId int) (int, error) {
+	query := "SELECT USA.id, USA.percent_match FROM user_skill_analysis USA WHERE USA.resume_id = $1 AND USA.vacancy_id = $2;"
+	var USAID int
+	var PercentMatch int
+	err := manager.Conn.QueryRow(query, superdupersecretResumeId, superdupersecretsupermanVacancyId).Scan(&USAID, &PercentMatch)
+	if err != nil {
+		return 0, err
+	}
+	return PercentMatch, nil
+}
+
+func (manager *Manager) GetResumeUserVacancies(resumeId int) ([]int, error) {
+	query := "SELECT vacancy_1_id, vacancy_2_id, vacancy_3_id FROM user_resumes WHERE id = $1"
+
+	var vacancies [3]sql.NullInt32
+	err := manager.Conn.QueryRow(query, resumeId).Scan(&vacancies[0], &vacancies[1], &vacancies[2])
+	if err != nil {
+		return nil, err
+	}
+
+	var result []int
+	for _, vacancy := range vacancies {
+		if vacancy.Valid {
+			result = append(result, int(vacancy.Int32))
+		}
+	}
+
+	return result, nil
+}
+
+func (manager *Manager) GetSkillsFromUserResume(resumeId int) ([]string, []string, error) {
+	var hardSkills []string
+	var softSkills []string
+	query := `SELECT hs.hard_skill FROM user_resume_hard urh INNER JOIN hard_skills hs ON urh.hard_skill_id = hs.id WHERE urh.resume_id = $1;`
+
+	rows, err := manager.Conn.Query(query, resumeId)
+	if err != nil {
+		return nil, nil, err
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var hardSkill models.ResumeHardSkill
+		err := rows.Scan(&hardSkill.SkillName)
+		if err != nil {
+			return nil, nil, err
+		}
+		hardSkills = append(hardSkills, hardSkill.SkillName)
+	}
+
+	query = `SELECT ss.soft_skill FROM user_resume_soft urs INNER JOIN soft_skills ss ON urs.soft_skill_id = ss.id WHERE urs.resume_id = $1;`
+
+	rows, err = manager.Conn.Query(query, resumeId)
+	if err != nil {
+		return nil, nil, err
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var softSkill models.ResumeSoftSkill
+		err := rows.Scan(&softSkill.SkillName)
+		if err != nil {
+			return nil, nil, err
+		}
+		softSkills = append(softSkills, softSkill.SkillName)
+	}
+
+	return hardSkills, softSkills, nil
+}
+
+func (manager *Manager) GetUserResumes(userId int) ([]models.UserResumeInfo, error) {
+	query := `
+		SELECT
+			ur.id AS resume_id,
+			v.name AS vacancy_name,
+			usa.percent_match
+		FROM
+			user_resumes ur
+		LEFT JOIN
+			user_skill_analysis usa ON ur.id = usa.resume_id
+		LEFT JOIN
+			vacancies v ON usa.vacancy_id = v.id
+		WHERE
+			ur.user_id = $1
+		ORDER BY
+			ur.id, usa.percent_match DESC
+	`
+
+	rows, err := manager.Conn.Query(query, userId)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	resumeMap := make(map[int][]struct {
+		Name    string
+		Percent int
+	})
+
+	for rows.Next() {
+		var resumeId int
+		var vacancyName sql.NullString
+		var percent sql.NullInt32
+
+		err := rows.Scan(&resumeId, &vacancyName, &percent)
+		if err != nil {
+			return nil, err
+		}
+
+		if _, exists := resumeMap[resumeId]; !exists {
+			resumeMap[resumeId] = []struct {
+				Name    string
+				Percent int
+			}{}
+		}
+
+		if vacancyName.Valid && percent.Valid {
+			resumeMap[resumeId] = append(resumeMap[resumeId], struct {
+				Name    string
+				Percent int
+			}{
+				Name:    vacancyName.String,
+				Percent: int(percent.Int32),
+			})
+		}
+	}
+
+	if err = rows.Err(); err != nil {
+		return nil, err
+	}
+
+	var result []models.UserResumeInfo
+
+	for resumeId, vacancies := range resumeMap {
+		result = append(result, models.UserResumeInfo{
+			ResumeId:  resumeId,
+			Vacancies: vacancies,
+		})
+	}
+
+	return result, nil
 }
 
 func (manager *Manager) UpdateUserResumesWithTopVacancies(Id int, topVacs []models.VacancyMatchResult) error {

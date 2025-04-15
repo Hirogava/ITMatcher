@@ -44,6 +44,7 @@ type AnalyzedSkills struct {
 }
 
 type VacancyMatchResult struct {
-	VacancyId int `json:"vacancy_id"`
-	MatchRate int `json:"match_rate"`
+	VacancyId   int         `json:"vacancy_id"`
+	MatchRate   int         `json:"match_rate"`
+	FinalSkills FinalSkills `json:"final_skills"`
 }

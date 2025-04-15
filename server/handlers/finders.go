@@ -23,7 +23,7 @@ import (
 func AddFinder(w http.ResponseWriter, r *http.Request, manager *db.Manager) {
 	firstName := r.FormValue("first_name")
 	lastName := r.FormValue("last_name")
-	surName := r.FormValue("sur_name")
+	surName := r.FormValue("surname")
 	phone := r.FormValue("phone_number")
 	email := r.FormValue("email")
 	vacId, err := strconv.Atoi(r.FormValue("vacancy"))
@@ -48,7 +48,7 @@ func AddFinder(w http.ResponseWriter, r *http.Request, manager *db.Manager) {
 		return
 	}
 
-	resumeId, err := manager.CreateResumeForHr(finderId, firstName, lastName, surName, phone, email, vacId)
+	resumeId, err := manager.CreateResumeForHr(finderId, firstName, lastName, surName, email, phone, vacId)
 	if err != nil {
 		log.Printf("Ошибка создание резюме: %v", err)
 		http.Error(w, "Ошибка создания резюме", http.StatusInternalServerError)
@@ -218,18 +218,27 @@ func AddFinderResume(w http.ResponseWriter, r *http.Request, manager *db.Manager
 		return
 	}
 
-	top_vacs := GetTopMatchingVacancies(resumeSkills, manager)
-	if len(top_vacs) >= 3 {
-		err = manager.UpdateUserResumesWithTopVacancies(resumeId, top_vacs)
+	var topVacs []models.VacancyMatchResult
+	topVacs = GetTopMatchingVacancies(resumeSkills, manager)
+	if len(topVacs) >= 3 {
+		err = manager.UpdateUserResumesWithTopVacancies(resumeId, topVacs)
 		if err != nil {
 			log.Printf("Ошибка сохранения топ-3 вакансий: %v", err)
 			w.Write([]byte("Афигеть: " + err.Error()))
 			return
 		}
 	}
+	for _, vac := range topVacs {
+		err = manager.SaveAnalyzedDataForUser(resumeId, vac.VacancyId, vac.FinalSkills)
+		if err != nil {
+			log.Printf("Ошибка сохранения данных аналитики: %v", err)
+			w.Write([]byte("Афигеть: " + err.Error()))
+			return
+		}
+	}
 
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(top_vacs)
+	json.NewEncoder(w).Encode(topVacs)
 	w.WriteHeader(http.StatusOK)
 }
 
@@ -257,8 +266,9 @@ func GetTopMatchingVacancies(resumeSkills models.ResumeSkills, manager *db.Manag
 		}
 
 		results = append(results, models.VacancyMatchResult{
-			VacancyId: vacancy.Id,
-			MatchRate: analyzedSkills.Percent,
+			VacancyId:   vacancy.Id,
+			FinalSkills: analyzedSkills,
+			MatchRate:   analyzedSkills.Percent,
 		})
 	}
 
@@ -267,4 +277,25 @@ func GetTopMatchingVacancies(resumeSkills models.ResumeSkills, manager *db.Manag
 	})
 
 	return results
+}
+
+func GetUserResumes(w http.ResponseWriter, r *http.Request, manager *db.Manager) {
+	userId := cookies.GetId(r)
+	if userId == nil {
+		http.Error(w, "Пользователь не авторизован", http.StatusUnauthorized)
+		return
+	}
+
+	//resumes, err := manager.GetResumesByUserId(*userId)
+	//if err != nil {
+	//	log.Printf("Ошибка получения резюме пользователя: %v", err)
+	//	http.Error(w, "Ошибка получения резюме", http.StatusInternalServerError)
+	//	return
+	//}
+	//
+	//w.Header().Set("Content-Type", "application/json")
+	//if err := json.NewEncoder(w).Encode(resumes); err != nil {
+	//	log.Printf("Ошибка кодирования JSON: %v", err)
+	//	http.Error(w, "Ошибка обработки данных", http.StatusInternalServerError)
+	//}
 }

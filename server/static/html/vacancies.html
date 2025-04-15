@@ -122,7 +122,7 @@
     <script>
         async function vacancy_info(id){
             try{
-                const response = await fetch(`/api/hr/get_vacancy/${id}`, {
+                const response = await fetch(`/api/hr/vacancy/${id}`, {
                 method: 'GET',
                 headers: {
                     'Content-Type': 'application/json'
