@@ -7,6 +7,7 @@ import (
 	"gaspr/models"
 	"gaspr/services/cookies"
 	"html/template"
+	"log"
 	"net/http"
 	"strings"
 
@@ -44,8 +45,8 @@ func StaticRoutes(r *mux.Router, manager *db.Manager) {
 	r.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		tmpl := GetTemplate("landing")
 		data := map[string]interface{}{
-			"pageTitle":  "Главная",
-			"hr_account": cookies.GetUsername(r),
+			"pageTitle": "Главная",
+			"account":   cookies.GetAccount(r),
 		}
 		tmpl.ExecuteTemplate(w, "base", data)
 	})
@@ -95,6 +96,7 @@ func StaticRoutes(r *mux.Router, manager *db.Manager) {
 				"pageTitle":    "Вакансии",
 				"finders":      findersData,
 				"vacancies":    allVacancies,
+				"account":      cookies.GetAccount(r),
 				"current_page": "finders",
 			}
 
@@ -105,14 +107,10 @@ func StaticRoutes(r *mux.Router, manager *db.Manager) {
 	r.Handle("/hr/acc", middleware.AuthRequired("hr",
 		http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			tmpl := GetTemplate("hr_account")
-			store := cookies.NewCookieManager(r)
 
 			data := map[string]interface{}{
-				"pageTitle": "Аккаунт",
-				"hr_account": map[string]string{
-					"username": store.Session.Values["username"].(string),
-					"email":    store.Session.Values["email"].(string),
-				},
+				"pageTitle":    "Аккаунт",
+				"account":      cookies.GetAccount(r),
 				"current_page": "hr_account",
 			}
 
@@ -133,22 +131,42 @@ func StaticRoutes(r *mux.Router, manager *db.Manager) {
 				"pageTitle":    "Вакансии",
 				"vacancies":    vacancies,
 				"current_page": "vacancies",
+				"account":      cookies.GetAccount(r),
 			}
 
 			tmpl.ExecuteTemplate(w, "base", data)
 		})))
 
 	/*
-	User сторона
+		User сторона
 	*/
-	
+
 	r.Handle("/user/acc", middleware.AuthRequired("users",
 		http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			// Тут доделаешь шаблон
+			tmpl := GetTemplate("finder_account")
+			data := map[string]interface{}{
+				"pageTitle":    "Профиль",
+				"current_page": "user_account",
+				"account":      cookies.GetAccount(r),
+			}
+
+			log.Println(data)
+
+			tmpl.ExecuteTemplate(w, "base", data)
+
 		})))
 
 	r.Handle("/user/resumes", middleware.AuthRequired("users",
 		http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			// тут тоеже
+			tmpl := GetTemplate("finder_resumes")
+			data := map[string]interface{}{
+				"pageTitle":    "Все резюме",
+				"current_page": "user_resumes",
+				"account":      cookies.GetAccount(r),
+			}
+
+			log.Println(data)
+
+			tmpl.ExecuteTemplate(w, "base", data)
 		})))
 }

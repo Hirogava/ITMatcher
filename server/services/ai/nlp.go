@@ -4,23 +4,31 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"os"
-	"os/exec"
+	"net/http"
 )
 
 func Request(resume string) (map[string][]string, error) {
-	cmd := exec.Command("python", "services/ai/main.py")
-	cmd.Stdin = bytes.NewBufferString(resume)
-	cmd.Env = append(os.Environ(), "PYTHONIOENCODING=utf-8")
+	url := "http://localhost:8001/analyze"
 
-	output, err := cmd.CombinedOutput()
+	payload := map[string]string{"text": resume}
+	data, err := json.Marshal(payload)
 	if err != nil {
-		return nil, fmt.Errorf("AI request failed: %v, output: %s", err, string(output))
+		return nil, fmt.Errorf("ошибка сериализации запроса: %v", err)
+	}
+
+	resp, err := http.Post(url, "application/json", bytes.NewBuffer(data))
+	if err != nil {
+		return nil, fmt.Errorf("ошибка запроса к AI-сервису: %v", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("AI-сервис вернул статус: %s", resp.Status)
 	}
 
 	var result map[string][]string
-	if err := json.Unmarshal(output, &result); err != nil {
-		return nil, fmt.Errorf("Ошибка декодирования json: %v", err)
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		return nil, fmt.Errorf("ошибка декодирования ответа: %v", err)
 	}
 
 	return result, nil

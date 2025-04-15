@@ -1,0 +1,114 @@
+{{define "base"}}
+{{template "platform_header" .}}
+<main class="flex-grow-1 d-flex mx-2 align-items-center justify-content-center">
+    <div class="container">
+        <div class="main bg-white rounded p-4 shadow">
+            <div class="d-flex align-items-center mb-2">
+                <input type="text" class="form-control me-2" placeholder="Поиск кандидата" aria-label="Search">
+                <div class="ms-auto mb-auto">
+                    <button type="button" class="btn rounded selected btn-lg ms-3 fw-regular text-white" data-bs-toggle="modal" data-bs-target="#exampleModal">
+                        Добавить
+                    </button>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-lg-6">
+                    <div class="card border rounded mt-1 p-3 px-3">
+                        <h6 class="fw-bold">resume-tralalelo-tralala.pdf</h6>
+
+                        <p class="my-1">Подходящие вакансии:</p>
+                        <ul class="mt-1">
+                            <li>Backend разработчик - 97%</li>
+                            <li>Backend разработчик - 97%</li>
+                            <li>Backend разработчик - 97%</li>
+                        </ul>
+                        
+                        <button type="button" class="btn rounded btn-md fw-regular text-white" style="width: auto; background-color: var(--primary-color);" data-bs-toggle="modal" data-bs-target="#finder_resume">
+                            К резюме
+                        </button>
+                    </div>
+                </div> 
+            </div>
+        </div>
+    </div>
+</main>
+</div>
+<div class="modal fade" id="finder_resume" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-xl">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h1 class="modal-title fs-5" id="exampleModalLabel">Информация о резюме</h1>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body d-flex">
+            <div class="col-6">
+                <h6>Название файла:</h6>
+                <p>resume-tralalelo-tralala.pdf</p>
+
+                <h6>Извлеченные навыки:</h6>
+                <ul>
+                    <li>
+                        <h6>HardSkills</h6>
+                        <p class="ps-3">SQL, FastAPI, Python, HTML, HTTP</p>
+                    </li>
+                    <li>
+                        <h6>SoftSkills</h6>
+                        <p class="ps-3">SQL, FastAPI, Python, HTML, HTTP</p>
+                    </li>
+                </ul>
+                
+            </div>
+            <div class="col-6">
+                <h6>Подходящие вакансии:</h6>
+                <div class="card border rounded p-3 px-3 my-1">
+                    <div class="d-flex align-items-center mb-2">
+                        <h6 class="fw-bold">Backend разработчик</h6>
+                        <h6 class="fw-bold text-green ms-auto">100%</h6>
+                    </div>
+
+                    <h6 class="fw-bold">Совпавшие навыки: </h6>
+                    <p class="ps-3 my-1">SQL, FastAPI, Python, HTML, HTTP</p>
+
+                    <h6 class="fw-bold">Несовпавшие навыки: </h6>
+                    <p class="ps-3 my-1">SQL, FastAPI, Python, HTML, HTTP</p>
+
+                </div>
+
+                <div class="card border rounded p-3 px-3 my-1">
+                    <div class="d-flex align-items-center mb-2">
+                        <h6 class="fw-bold">Backend разработчик</h6>
+                        <h6 class="fw-bold text-green ms-auto">100%</h6>
+                    </div>
+
+                    <h6 class="fw-bold">Совпавшие навыки: </h6>
+                    <p class="ps-3 my-1">SQL, FastAPI, Python, HTML, HTTP</p>
+
+                    <h6 class="fw-bold">Несовпавшие навыки: </h6>
+                    <p class="ps-3 my-1">SQL, FastAPI, Python, HTML, HTTP</p>
+
+                </div>
+
+                <div class="card border rounded p-3 px-3 my-1">
+                    <div class="d-flex align-items-center mb-2">
+                        <h6 class="fw-bold">Backend разработчик</h6>
+                        <h6 class="fw-bold text-green ms-auto">100%</h6>
+                    </div>
+
+                    <h6 class="fw-bold">Совпавшие навыки: </h6>
+                    <p class="ps-3 my-1">SQL, FastAPI, Python, HTML, HTTP</p>
+
+                    <h6 class="fw-bold">Несовпавшие навыки: </h6>
+                    <p class="ps-3 my-1">SQL, FastAPI, Python, HTML, HTTP</p>
+
+                </div>
+            </div>
+        </div>
+        
+      </div>
+    </div>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.5/dist/js/bootstrap.bundle.min.js" integrity="sha384-k6d4wzSIapyDyv1kpU366/PK5hCdSbCRGRCMv+eplOQJWyd1fbcAu9OCUj5zNLiq" crossorigin="anonymous"></script>
+</body>
+</html>
+{{end}}

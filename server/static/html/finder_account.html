@@ -11,16 +11,16 @@
             </div>
 
             <div class="p-3">
-                {{if .account.HR}}
+                {{if .account.User}}
                 <label class="fw-bold my-1">Личная информация</label>
                 <div class="row">
-                    <div class="col-lg-4">
+                    <!-- <div class="col-lg-4">
                         <label for="" class="fw-medium">Имя пользователя</label>
-                        <input type="email" id="email" name="email" class="form-control mb-3" value="{{.account.HR.Username}}" disabled>
-                    </div>
+                        <input type="email" id="email" name="email" class="form-control mb-3" value="" disabled>
+                    </div> -->
                     <div class="col-lg-4">
                         <label for="" class="fw-medium">Email</label>
-                        <input type="email" id="email" name="email" class="form-control mb-3" value="{{.account.HR.Email}}" disabled>
+                        <input type="email" id="email" name="email" class="form-control mb-3" value="{{.account.User.Email}}" disabled>
                     </div>
                 </div>
 
@@ -31,14 +31,6 @@
                         <a href="">Изменить пароль</a>
                     </div>
                 </div>
-
-                <div class="row mt-3">
-                    <label class="fw-bold my-1">Связь с сервисами</label>
-                    <div class="col-lg-4">
-                        <label for="" class="fw-medium">hh.ru</label>
-                        <input type="email" id="email" name="email" class="form-control mb-3" value="-" disabled>
-                    </div>
-                </div>
                 {{else}}
                     <p>Данные аккаунта не найдены.</p>
                 {{end}}
@@ -46,8 +38,6 @@
         </div>
     </div>
 </main>
-    </div>
-
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.5/dist/js/bootstrap.bundle.min.js" integrity="sha384-k6d4wzSIapyDyv1kpU366/PK5hCdSbCRGRCMv+eplOQJWyd1fbcAu9OCUj5zNLiq" crossorigin="anonymous"></script>
 </body>
 </html>

@@ -27,6 +27,11 @@ func AddFinder(w http.ResponseWriter, r *http.Request, manager *db.Manager) {
 	phone := r.FormValue("phone_number")
 	email := r.FormValue("email")
 	vacId, err := strconv.Atoi(r.FormValue("vacancy"))
+	if err != nil {
+		log.Printf("Ошибка получения ID вакансии: %v", err)
+		http.Error(w, "Ошибка получения ID вакансии", http.StatusInternalServerError)
+		return
+	}
 	hrId := cookies.GetId(r)
 
 	var vacSkills models.VacancySkills

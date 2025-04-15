@@ -30,10 +30,16 @@
                         <a class="nav-link fs-6" href="#">Еще что-то</a>
                       </li>
                     </ul>
-                    {{ if $.hr_account }}
-                    <a href="/hr/acc">{{.hr_account}}</a>
-                    {{ else }}
+                    {{ if not .account }}
                     <a href="/login">Войти</a>
+                    {{ else }}
+                    {{ if .account.HR }}
+                    <a href="/hr/acc">{{ .account.HR.Username }}</a>
+                    {{ else }}
+                    {{ if .account.User }}
+                    <a href="/user/acc">{{.account.User.Email}}</a>
+                    {{ end }}
+                    {{ end }}
                     {{ end }}
                   </div>
                 </div>
