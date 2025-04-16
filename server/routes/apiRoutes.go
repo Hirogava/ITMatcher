@@ -5,12 +5,13 @@ import (
 	"fmt"
 	"gaspr/db"
 	"gaspr/handlers"
-	"gaspr/handlers/middlewares"
+	middleware "gaspr/handlers/middlewares"
 	"gaspr/services/ai"
 	"gaspr/services/cookies"
-	"github.com/gorilla/mux"
 	"io"
 	"net/http"
+
+	"github.com/gorilla/mux"
 )
 
 func ApiRoutes(r *mux.Router, manager *db.Manager) {
