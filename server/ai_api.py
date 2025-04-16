@@ -6,7 +6,6 @@ from pydantic import BaseModel
 
 app = FastAPI()
 
-# Глобальные настройки
 SKILL_NORMALIZATION = {
     "golang": "Go",
     "postgresql": "PostgreSQL",
@@ -39,7 +38,231 @@ SKILL_NORMALIZATION = {
     "node.js": "Node.js",
     "react": "React",
     "angular": "Angular",
-    "vue": "Vue.js"
+    "vue": "Vue.js",
+    "математическое мышление": "Математическое мышление",
+    "data analysis": "Data Analysis",
+    "machine learning": "Machine Learning",
+    "r": "R",
+    "scala": "Scala",
+    "tensorflow": "TensorFlow",
+    "pytorch": "PyTorch",
+    "hadoop": "Hadoop",
+    "spark": "Spark",
+    "excel": "Excel",
+    "agile": "Agile",
+    "scrum": "Scrum",
+    "jira": "JIRA",
+    "confluence": "Confluence",
+    "ci/cd": "CI/CD",
+    "jenkins": "Jenkins",
+    "ansible": "Ansible",
+    "terraform": "Terraform",
+    "1c": "1C",
+    "low-code": "Low-code",
+    "outsystems": "OutSystems",
+    "mendix": "Mendix",
+    "appian": "Appian",
+    "powerapps": "PowerApps",
+    "salesforce": "Salesforce",
+    "sap": "SAP",
+    "oracle": "Oracle",
+    "graphql": "GraphQL",
+    "ruby": "Ruby",
+    "php": "PHP",
+    "perl": "Perl",
+    "swift": "Swift",
+    "objective-c": "Objective-C",
+    "kotlin": "Kotlin",
+    "rust": "Rust",
+    "dart": "Dart",
+    "flutter": "Flutter",
+    "bootstrap": "Bootstrap",
+    "sass": "SASS",
+    "less": "LESS",
+    "webpack": "Webpack",
+    "babel": "Babel",
+    "express.js": "Express.js",
+    "spring boot": "Spring Boot",
+    "hibernate": "Hibernate",
+    "laravel": "Laravel",
+    "symfony": "Symfony",
+    "flask": "Flask",
+    "fastapi": "FastAPI",
+    "asp.net": "ASP.NET",
+    "pandas": "Pandas",
+    "numpy": "NumPy",
+    "scipy": "SciPy",
+    "matplotlib": "Matplotlib",
+    "seaborn": "Seaborn",
+    "plotly": "Plotly",
+    "d3.js": "D3.js",
+    "data mining": "Data Mining",
+    "predictive modeling": "Predictive Modeling",
+    "optimization": "Optimization",
+    "quantitative analysis": "Quantitative Analysis",
+    "statistical modeling": "Statistical Modeling",
+    "regression analysis": "Regression Analysis",
+    "time series analysis": "Time Series Analysis",
+    "c#": "C#",
+    "c": "C",
+    "matlab": "MATLAB",
+    "simulink": "Simulink",
+    "sas": "SAS",
+    "spss": "SPSS",
+    "stata": "Stata",
+    "julia": "Julia",
+    "opencv": "OpenCV",
+    "keras": "Keras",
+    "mxnet": "MXNet",
+    "caffe": "Caffe",
+    "blockchain": "Blockchain",
+    "smart contracts": "Smart Contracts",
+    "solidity": "Solidity",
+    "hyperledger": "Hyperledger",
+    "ethereum": "Ethereum",
+    "quantum computing": "Quantum Computing",
+    "qiskit": "Qiskit",
+    "bioinformatics": "Bioinformatics",
+    "genomics": "Genomics",
+    "protobuf": "Protobuf",
+    "swiftui": "SwiftUI",
+    "minio": "MinIO",
+    "koobiq": "Koobiq",
+    "zig": "Zig",
+    "nim": "Nim",
+    "crystal": "Crystal",
+    "ocaml": "OCaml",
+    "elm": "Elm",
+    "webassembly": "WebAssembly",
+    "svelte": "Svelte",
+    "next.js": "Next.js",
+    "nuxt.js": "Nuxt.js",
+    "nestjs": "NestJS",
+    "neo4j": "Neo4j",
+    "clickhouse": "ClickHouse",
+    "airflow": "Airflow",
+    "mlflow": "MLflow",
+    "langchain": "LangChain",
+    "llms": "LLMs",
+    "prompt engineering": "Prompt Engineering",
+    "mlops": "MLOps",
+    "devsecops": "DevSecOps",
+    "iac": "IaC",
+    "pulumi": "Pulumi",
+    "xgboost": "XGBoost",
+    "lightgbm": "LightGBM",
+    "catboost": "CatBoost",
+    "huggingface transformers": "HuggingFace Transformers",
+    "spacy": "spaCy",
+    "nltk": "NLTK",
+    "stanza": "Stanza",
+    "ocr": "OCR",
+    "yolo": "YOLO",
+    "gans": "GANs",
+    "vae": "VAE",
+    "jax": "JAX",
+    "kafka": "Kafka",
+    "splunk": "Splunk",
+    "datadog": "Datadog",
+    "grafana": "Grafana",
+    "opentelemetry": "OpenTelemetry",
+    "metasploit": "Metasploit",
+    "burp suite": "Burp Suite",
+    "wireshark": "Wireshark",
+    "gdpr": "GDPR",
+    "hipaa": "HIPAA",
+    "pci dss": "PCI DSS",
+    "sap hana": "SAP HANA",
+    "servicenow": "ServiceNow",
+    "qlikview": "QlikView",
+    "qlik sense": "Qlik Sense",
+    "abap": "ABAP",
+    "t-sql": "T-SQL",
+    "pl/sql": "PL/SQL",
+    "openshift": "OpenShift",
+    "helm": "Helm",
+    "istio": "Istio",
+    "webrtc": "WebRTC",
+    "ffmpeg": "FFmpeg",
+    "three.js": "Three.js",
+    "unity": "Unity",
+    "unreal engine": "Unreal Engine",
+    "blender": "Blender",
+    "latex": "LaTeX",
+    "gherkin": "Gherkin",
+    "cucumber": "Cucumber",
+    "testrail": "TestRail",
+    "pytest": "PyTest",
+    "databricks": "Databricks",
+    "snowflake": "Snowflake",
+    "redshift": "Redshift",
+    "figma": "Figma",
+    "sketch": "Sketch",
+    "adobe xd": "Adobe XD",
+    "wordpress": "WordPress",
+    "joomla": "Joomla",
+    "drupal": "Drupal",
+    "bitrix": "Bitrix",
+    "opencart": "OpenCart",
+    "yii2": "Yii2",
+    "laravel5": "Laravel 5",
+    "nginx": "Nginx",
+    "gimp": "GIMP",
+    "вёрстка сайтов": "Вёрстка сайтов",
+    "оптимизация кода": "Оптимизация кода",
+    "архитектура кода": "Архитектура кода",
+    "разработка фреймворка": "Разработка фреймворков",
+    "написание скриптов": "Написание скриптов",
+    "формирование баз данных": "Формирование баз данных",
+    "создание cms": "Создание CMS",
+    "создание crm": "Создание CRM",
+    "установка на cms": "Установка на CMS"
+}
+
+SOFT_SKILL_NORMALIZATION = {
+    "коммуникабельность": "Коммуникабельность",
+    "лидерство": "Лидерство",
+    "работа в команде": "Работа в команде",
+    "критическое мышление": "Критическое мышление",
+    "адаптивность": "Адаптивность",
+    "решение проблем": "Решение проблем",
+    "управление временем": "Тайм-менеджмент",
+    "креативность": "Креативность",
+    "эмоциональный интеллект": "Эмоциональный интеллект",
+    "навыки презентации": "Навыки презентации",
+    "переговоры": "Навыки переговоров",
+    "организованность": "Организованность",
+    "инициативность": "Инициативность",
+    "стрессоустойчивость": "Стрессоустойчивость",
+    "гибкость": "Гибкость",
+    "мотивация": "Мотивация",
+    "внимание к деталям": "Внимание к деталям",
+    "навыки слушания": "Активное слушание",
+    "управление конфликтами": "Управление конфликтами",
+    "самомотивация": "Самомотивация",
+    "навыки наставничества": "Наставничество",
+    "управление проектами": "Управление проектами",
+    "клиентоориентированность": "Клиентоориентированность",
+    "управление изменениями": "Управление изменениями",
+    "навыки делегирования": "Делегирование",
+    "навыки коучинга": "Коучинг",
+    "навыки фасилитации": "Фасилитация",
+    "навыки убеждения": "Убеждение",
+    "эмпатия": "Эмпатия",
+    "культурная осведомленность": "Культурная осведомленность",
+    "аналитические способности": "Аналитические способности",
+    "приоритизация": "Приоритизация задач",
+    "обучаемость": "Обучаемость",
+    "ответственность": "Ответственность",
+    "культурная адаптивность": "Культурная адаптивность",
+    "чтение технической литературы": "Чтение технической литературы",
+    "саморазвитие": "Саморазвитие",
+    "достиженческое мышление": "Достиженческое мышление",
+    "инициативность": "Инициативность",
+    "проактивность": "Проактивность",
+    "ассертивность": "Ассертивность",
+    "публичные выступления": "Публичные выступления",
+    "цифровой этикет": "Цифровой этикет"
 }
 
 STOP_WORDS = {
@@ -74,38 +297,30 @@ STOP_WORDS = {
 }
 
 def preprocess_text(text: str) -> str:
-    """Преобразуем текст вакансии в подходящий формат"""
-    # Добавляем пробелы вокруг скобок
     text = text.replace('(', ' (').replace(')', ') ')
-    # Заменяем переносы строк на точки
     lines = [line.strip() for line in text.split('\n') if line.strip()]
-    # Объединяем в предложения
     return '. '.join(lines) + '.'
 
 def normalize_skill(text: str, entity_type: str) -> str:
-    """Нормализация названий навыков"""
     text = text.strip()
     lower_text = text.lower()
     
-    # Применяем замены из словаря нормализации
-    for pattern, replacement in SKILL_NORMALIZATION.items():
-        if pattern == lower_text:
-            return replacement
+    if entity_type == "HARDSKILL" and lower_text in SKILL_NORMALIZATION:
+        return SKILL_NORMALIZATION[lower_text]
+    elif entity_type == "SOFTSKILL" and lower_text in SOFT_SKILL_NORMALIZATION:
+        return SOFT_SKILL_NORMALIZATION[lower_text]
     
-    # Специальные правила для технических навыков
     if entity_type == "HARDSKILL":
         if len(text) <= 3:
             return text.upper()
         elif text.isupper() and len(text) > 3:
             return text.capitalize()
     
-    # Общие правила
     if len(text.split()) > 1:
         return ' '.join(word.capitalize() for word in text.split())
     return text.capitalize()
 
 def extract_entities(doc, entity_type: str) -> List[str]:
-    """Извлечение сущностей с упрощенными фильтрами"""
     valid_entities = set()
     skip_prefixes = {'http', 'www', 'github.com', 'habr', 'medium'}
     
@@ -114,30 +329,25 @@ def extract_entities(doc, entity_type: str) -> List[str]:
             original_text = ent.text.strip()
             lower_text = original_text.lower()
             
-            # Пропускаем ссылки и нежелательные паттерны
             if any(lower_text.startswith(prefix) for prefix in skip_prefixes):
                 continue
                 
-            # Пропускаем стоп-слова
             if lower_text in STOP_WORDS.get(entity_type, set()):
                 continue
                 
-            # Нормализуем текст
             normalized = normalize_skill(original_text, entity_type)
             
-            # Базовые фильтры
-            if len(normalized) >= 2 and any(c.isalpha() for c in normalized):
+            if (len(normalized) >= 2 
+                and not normalized.isdigit()
+                and not any(c in normalized for c in ['\n', ':', '/', '(', ')'])
+                and any(c.isalpha() for c in normalized)):
                 valid_entities.add(normalized)
     
     return postprocess_skills(list(valid_entities))
 
 def postprocess_skills(skills: List[str]) -> List[str]:
-    """Постобработка извлеченных навыков"""
-    # Удаляем дубликаты
     skills = list(set(skills))
-    # Сортируем по длине (чтобы более длинные варианты были первыми)
     skills.sort(key=lambda x: (-len(x), x.lower()))
-    # Удаляем подстроки
     return [s for i, s in enumerate(skills) 
             if not any(s.lower() in longer.lower() for longer in skills[:i])]
 
@@ -147,16 +357,10 @@ class ResumeRequest(BaseModel):
 @app.post("/analyze")
 def analyze(req: ResumeRequest) -> Dict[str, List[str]]:
     try:
-        # Загружаем модель
         nlp_ru = spacy.load("./output/model-best")
-        
-        # Предобработка текста
         text = preprocess_text(req.text)
-        
-        # Анализ текста
         doc = nlp_ru(text)
         
-        # Извлекаем сущности
         hardskills = extract_entities(doc, "HARDSKILL")
         softskills = extract_entities(doc, "SOFTSKILL")
         
@@ -166,7 +370,6 @@ def analyze(req: ResumeRequest) -> Dict[str, List[str]]:
         }
         
     except Exception as e:
-        print("Error:", str(e))
         return {"error": str(e)}
 
 if __name__ == "__main__":
