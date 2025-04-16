@@ -719,6 +719,7 @@ func (manager *Manager) GetUserResumes(userId int) ([]models.UserResumeInfo, err
 		Percent int
 	})
 
+	idMap := make(map[int]int)
 	for rows.Next() {
 		var resumeId int
 		var vacancyName sql.NullString
@@ -728,23 +729,27 @@ func (manager *Manager) GetUserResumes(userId int) ([]models.UserResumeInfo, err
 		if err != nil {
 			return nil, err
 		}
+		idMap[resumeId]++
 
-		if _, exists := resumeMap[resumeId]; !exists {
-			resumeMap[resumeId] = []struct {
-				Name    string
-				Percent int
-			}{}
-		}
+		if idMap[resumeId] <= 3 {
+			if _, exists := resumeMap[resumeId]; !exists {
+				resumeMap[resumeId] = []struct {
+					Name    string
+					Percent int
+				}{}
+			}
 
-		if vacancyName.Valid && percent.Valid {
-			resumeMap[resumeId] = append(resumeMap[resumeId], struct {
-				Name    string
-				Percent int
-			}{
-				Name:    vacancyName.String,
-				Percent: int(percent.Int32),
-			})
+			if vacancyName.Valid && percent.Valid {
+				resumeMap[resumeId] = append(resumeMap[resumeId], struct {
+					Name    string
+					Percent int
+				}{
+					Name:    vacancyName.String,
+					Percent: int(percent.Int32),
+				})
+			}
 		}
+		
 	}
 
 	if err = rows.Err(); err != nil {

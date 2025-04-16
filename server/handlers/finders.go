@@ -224,7 +224,7 @@ func AddFinderResume(w http.ResponseWriter, r *http.Request, manager *db.Manager
 	}
 
 	topVacs, err := GetTopMatchingVacancies(resumeSkills, manager, *cookies.GetRole(r))
-	if len(topVacs) >= 3 && err != nil {
+	if len(topVacs) >= 3 {
 		err = manager.UpdateUserResumesWithTopVacancies(resumeId, topVacs)
 		if err != nil {
 			log.Printf("Ошибка сохранения топ-3 вакансий: %v", err)

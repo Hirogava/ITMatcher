@@ -230,11 +230,11 @@ ALTER TABLE "middle_soft_skills" ADD FOREIGN KEY ("soft_skill_id") REFERENCES "s
 
 ALTER TABLE "user_resumes" ADD FOREIGN KEY ("user_id") REFERENCES "users" ("id");
 
-ALTER TABLE "user_resumes" ADD FOREIGN KEY ("vacancy_1_id") REFERENCES "vacancies" ("id");
+ALTER TABLE "user_resumes" ADD FOREIGN KEY ("vacancy_1_id") REFERENCES "middle_vacancies" ("id");
 
-ALTER TABLE "user_resumes" ADD FOREIGN KEY ("vacancy_2_id") REFERENCES "vacancies" ("id");
+ALTER TABLE "user_resumes" ADD FOREIGN KEY ("vacancy_2_id") REFERENCES "middle_vacancies" ("id");
 
-ALTER TABLE "user_resumes" ADD FOREIGN KEY ("vacancy_3_id") REFERENCES "vacancies" ("id");
+ALTER TABLE "user_resumes" ADD FOREIGN KEY ("vacancy_3_id") REFERENCES "middle_vacancies" ("id");
 
 ALTER TABLE "user_resume_hard" ADD FOREIGN KEY ("hard_skill_id") REFERENCES "hard_skills" ("id");
 
