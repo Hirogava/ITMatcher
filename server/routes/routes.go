@@ -164,10 +164,19 @@ func StaticRoutes(r *mux.Router, manager *db.Manager) {
 	r.Handle("/user/resumes", middleware.AuthRequired("users",
 		http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			tmpl := GetTemplate("finder_resumes")
+
+			id := cookies.GetId(r)
+			resumes, err := manager.GetUserResumes(*id)
+			if err != nil {
+				log.Println("Ошибка при получении резюме:", err)
+				http.Error(w, "Не удалось получить резюме", http.StatusInternalServerError)
+				return
+			}
 			data := map[string]interface{}{
 				"pageTitle":    "Все резюме",
 				"current_page": "user_resumes",
 				"account":      cookies.GetAccount(r),
+				"resumes":      resumes,
 			}
 
 			log.Println(data)

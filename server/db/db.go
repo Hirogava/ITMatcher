@@ -547,10 +547,9 @@ func (manager *Manager) GetVacancySkills(vacancyId int, role string) ([]models.V
 		query += ` FROM vacantion_hard_skills vhs `
 	} else if role == "users" {
 		query += ` FROM middle_hard_skills vhs `
-	} 
+	}
 	query += `JOIN hard_skills hs ON vhs.hard_skill_id = hs.id
 		WHERE vhs.vacancy_id = $1`
-	
 
 	rows, err := manager.Conn.Query(query, vacancyId)
 	if err != nil {
