@@ -49,6 +49,15 @@ func GetId(r *http.Request) *int {
 	return &id
 }
 
+func GetRole(r *http.Request) *string {
+	store := NewCookieManager(r)
+	role, ok := store.Session.Values["role"].(string)
+	if !ok {
+		return nil
+	}
+	return &role
+}
+
 func GetAccount(r *http.Request) *models.Account {
 	store := NewCookieManager(r)
 	role, ok := store.Session.Values["role"].(string)

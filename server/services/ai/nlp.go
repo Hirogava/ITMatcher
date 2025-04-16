@@ -30,6 +30,6 @@ func Request(resume string) (map[string][]string, error) {
 	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
 		return nil, fmt.Errorf("ошибка декодирования ответа: %v", err)
 	}
-
+	
 	return result, nil
 }

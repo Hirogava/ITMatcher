@@ -81,7 +81,7 @@ func AddFinder(w http.ResponseWriter, r *http.Request, manager *db.Manager) {
 		return
 	}
 
-	vacSkills.HardSkills, vacSkills.SoftSkills, err = manager.GetVacancySkills(vacId)
+	vacSkills.HardSkills, vacSkills.SoftSkills, err = manager.GetVacancySkills(vacId, *cookies.GetRole(r))
 	if err != nil {
 		log.Printf("Ошибка получение навыков вакансии: %v", err)
 		http.Error(w, "Ошибка получения навыков вакансии", http.StatusInternalServerError)
@@ -223,7 +223,7 @@ func AddFinderResume(w http.ResponseWriter, r *http.Request, manager *db.Manager
 		return
 	}
 
-	topVacs, err := GetTopMatchingVacancies(resumeSkills, manager)
+	topVacs, err := GetTopMatchingVacancies(resumeSkills, manager, *cookies.GetRole(r))
 	if len(topVacs) >= 3 && err != nil {
 		err = manager.UpdateUserResumesWithTopVacancies(resumeId, topVacs)
 		if err != nil {
@@ -250,7 +250,7 @@ func AddFinderResume(w http.ResponseWriter, r *http.Request, manager *db.Manager
 	w.WriteHeader(http.StatusOK)
 }
 
-func GetTopMatchingVacancies(resumeSkills models.ResumeSkills, manager *db.Manager) ([]models.VacancyMatchResult, error) {
+func GetTopMatchingVacancies(resumeSkills models.ResumeSkills, manager *db.Manager, role string) ([]models.VacancyMatchResult, error) {
 	vacancies, err := manager.GetAllVacancies()
 	if err != nil {
 		log.Printf("Ошибка получения списка вакансий: %v", err)
@@ -261,7 +261,7 @@ func GetTopMatchingVacancies(resumeSkills models.ResumeSkills, manager *db.Manag
 
 	for _, vacancy := range vacancies {
 		var vacSkills models.VacancySkills
-		vacSkills.HardSkills, vacSkills.SoftSkills, err = manager.GetVacancySkills(vacancy.Id)
+		vacSkills.HardSkills, vacSkills.SoftSkills, err = manager.GetVacancySkills(vacancy.Id, role)
 		if err != nil {
 			log.Printf("Ошибка получения навыков вакансии %d: %v", vacancy.Id, err)
 			continue

@@ -450,7 +450,7 @@ func (manager *Manager) GetAllHrVacancies(hr_id int) ([]models.Vacancy, error) {
 			return nil, err
 		}
 
-		hard, soft, err := manager.GetVacancySkills(vacancy.Id)
+		hard, soft, err := manager.GetVacancySkills(vacancy.Id, "hr")
 		if err != nil {
 			return nil, err
 		}
@@ -511,7 +511,7 @@ func (manager *Manager) GetVacancyByIdForHr(id int) (models.Vacancy, error) {
 		return vacancy, err
 	}
 
-	vacancy.HardSkills, vacancy.SoftSkills, err = manager.GetVacancySkills(vacancy.Id)
+	vacancy.HardSkills, vacancy.SoftSkills, err = manager.GetVacancySkills(vacancy.Id, "hr")
 	if err != nil {
 		return vacancy, err
 	}
@@ -533,14 +533,19 @@ func (manager *Manager) CreateVacancySoftSkill(vacancyId int, skillId int) error
 	return manager.createVacancySkill("vacantion_soft_skills", "soft_skill_id", vacancyId, skillId)
 }
 
-func (manager *Manager) GetVacancySkills(vacancyId int) ([]models.VacancyHardSkill, []models.VacancySoftSkill, error) {
+func (manager *Manager) GetVacancySkills(vacancyId int, role string) ([]models.VacancyHardSkill, []models.VacancySoftSkill, error) {
 	var hardSkills []models.VacancyHardSkill
 	var softSkills []models.VacancySoftSkill
+	query := `SELECT hs.id, hs.hard_skill`
 
-	query := `SELECT hs.id, hs.hard_skill
-	FROM middle_hard_skills vhs
-	JOIN hard_skills hs ON vhs.hard_skill_id = hs.id
-	WHERE vhs.vacancy_id = $1`
+	if role == "hr" {
+		query += ` FROM vacantion_hard_skills vhs `
+	} else if role == "users" {
+		query += ` FROM middle_hard_skills vss `
+	} 
+	query += `JOIN hard_skills hs ON vhs.hard_skill_id = hs.id
+		WHERE vhs.vacancy_id = $1`
+	
 
 	rows, err := manager.Conn.Query(query, vacancyId)
 	if err != nil {
@@ -557,9 +562,13 @@ func (manager *Manager) GetVacancySkills(vacancyId int) ([]models.VacancyHardSki
 		hardSkills = append(hardSkills, hardSkill)
 	}
 
-	query = `SELECT ss.id, ss.soft_skill
-	FROM middle_soft_skills vss
-	JOIN soft_skills ss ON vss.soft_skill_id = ss.id
+	query = `SELECT ss.id, ss.soft_skill`
+	if role == "hr" {
+		query += ` FROM vacantion_soft_skills vss `
+	} else if role == "users" {
+		query += ` FROM middle_soft_skills vss `
+	}
+	query += `JOIN soft_skills ss ON vss.soft_skill_id = ss.id
 	WHERE vss.vacancy_id = $1`
 
 	rows, err = manager.Conn.Query(query, vacancyId)

@@ -20,12 +20,30 @@ SKILL_NORMALIZATION = {
     "gitlab ci/cd": "GitLab CI/CD",
     "bash": "Bash",
     "linux": "Linux",
-    "unix": "Unix"
+    "unix": "Unix",
+    "power bi": "Power BI",
+    "tableau": "Tableau",
+    "c++": "C++",
+    "go": "Go",
+    "python": "Python",
+    "java": "Java",
+    "javascript": "JavaScript",
+    "typescript": "TypeScript",
+    "docker": "Docker",
+    "kubernetes": "Kubernetes",
+    "aws": "AWS",
+    "azure": "Azure",
+    "gcp": "GCP",
+    "sql": "SQL",
+    "nosql": "NoSQL",
+    "node.js": "Node.js",
+    "react": "React",
+    "angular": "Angular",
+    "vue": "Vue.js"
 }
 
 STOP_WORDS = {
     "HARDSKILL": {
-        # Убрали многие технические термины из стоп-слов
         "code", "работа", "review", "source", "best", "practices", "код",
         "github.com/username", "английский", "unit", "habr", "medium", "github",
         "abc", "hard", "intermediate", "open", "actions", "a/b", "adobe",
@@ -55,6 +73,15 @@ STOP_WORDS = {
     }
 }
 
+def preprocess_text(text: str) -> str:
+    """Преобразуем текст вакансии в подходящий формат"""
+    # Добавляем пробелы вокруг скобок
+    text = text.replace('(', ' (').replace(')', ') ')
+    # Заменяем переносы строк на точки
+    lines = [line.strip() for line in text.split('\n') if line.strip()]
+    # Объединяем в предложения
+    return '. '.join(lines) + '.'
+
 def normalize_skill(text: str, entity_type: str) -> str:
     """Нормализация названий навыков"""
     text = text.strip()
@@ -62,7 +89,7 @@ def normalize_skill(text: str, entity_type: str) -> str:
     
     # Применяем замены из словаря нормализации
     for pattern, replacement in SKILL_NORMALIZATION.items():
-        if pattern in lower_text:
+        if pattern == lower_text:
             return replacement
     
     # Специальные правила для технических навыков
@@ -78,7 +105,7 @@ def normalize_skill(text: str, entity_type: str) -> str:
     return text.capitalize()
 
 def extract_entities(doc, entity_type: str) -> List[str]:
-    """Извлечение сущностей из документа с улучшенной фильтрацией"""
+    """Извлечение сущностей с упрощенными фильтрами"""
     valid_entities = set()
     skip_prefixes = {'http', 'www', 'github.com', 'habr', 'medium'}
     
@@ -98,19 +125,19 @@ def extract_entities(doc, entity_type: str) -> List[str]:
             # Нормализуем текст
             normalized = normalize_skill(original_text, entity_type)
             
-            # Основные фильтры
-            if (len(normalized) >= 2 
-                and not normalized.isdigit()
-                and not any(c in normalized for c in ['\n', ':', '/', '(', ')'])
-                and any(c.isalpha() for c in normalized)):
+            # Базовые фильтры
+            if len(normalized) >= 2 and any(c.isalpha() for c in normalized):
                 valid_entities.add(normalized)
     
     return postprocess_skills(list(valid_entities))
 
 def postprocess_skills(skills: List[str]) -> List[str]:
     """Постобработка извлеченных навыков"""
-    # Удаляем дубликаты и подстроки
-    skills = sorted(list(set(skills)), key=lambda x: (-len(x), x))
+    # Удаляем дубликаты
+    skills = list(set(skills))
+    # Сортируем по длине (чтобы более длинные варианты были первыми)
+    skills.sort(key=lambda x: (-len(x), x.lower()))
+    # Удаляем подстроки
     return [s for i, s in enumerate(skills) 
             if not any(s.lower() in longer.lower() for longer in skills[:i])]
 
@@ -120,11 +147,11 @@ class ResumeRequest(BaseModel):
 @app.post("/analyze")
 def analyze(req: ResumeRequest) -> Dict[str, List[str]]:
     try:
-        # Загружаем модель (должна быть предварительно обучена)
+        # Загружаем модель
         nlp_ru = spacy.load("./output/model-best")
         
         # Предобработка текста
-        text = ' '.join(req.text.split())  # Удаляем лишние пробелы
+        text = preprocess_text(req.text)
         
         # Анализ текста
         doc = nlp_ru(text)
@@ -139,6 +166,7 @@ def analyze(req: ResumeRequest) -> Dict[str, List[str]]:
         }
         
     except Exception as e:
+        print("Error:", str(e))
         return {"error": str(e)}
 
 if __name__ == "__main__":
