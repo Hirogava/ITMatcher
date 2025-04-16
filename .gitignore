@@ -5,3 +5,4 @@ aiData
 /server/finder/
 /server/vacancy/
 .DS_Store
+/server/user

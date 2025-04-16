@@ -467,10 +467,15 @@ func (manager *Manager) GetAllHrVacancies(hr_id int) ([]models.Vacancy, error) {
 	return vacancies, nil
 }
 
-func (manager *Manager) GetAllVacancies() ([]models.Vacancy, error) {
+func (manager *Manager) GetAllVacancies(role string) ([]models.Vacancy, error) {
 	var vacancies []models.Vacancy
+	var query string
 
-	query := `SELECT id, name FROM vacancies`
+	if role == "hr" {
+		query = `SELECT id, name FROM vacancies`
+	} else if role == "users" {
+		query = `SELECT id, name FROM middle_vacancies`
+	}
 	rows, err := manager.Conn.Query(query)
 	if err != nil {
 		return nil, err
@@ -541,7 +546,7 @@ func (manager *Manager) GetVacancySkills(vacancyId int, role string) ([]models.V
 	if role == "hr" {
 		query += ` FROM vacantion_hard_skills vhs `
 	} else if role == "users" {
-		query += ` FROM middle_hard_skills vss `
+		query += ` FROM middle_hard_skills vhs `
 	} 
 	query += `JOIN hard_skills hs ON vhs.hard_skill_id = hs.id
 		WHERE vhs.vacancy_id = $1`

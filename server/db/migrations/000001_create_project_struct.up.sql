@@ -163,7 +163,7 @@ CREATE TABLE "user_skill_analysis" (
     "percent_match" integer,
     "created_at" timestamp DEFAULT now(),
     FOREIGN KEY ("resume_id") REFERENCES "user_resumes" ("id"),
-    FOREIGN KEY ("vacancy_id") REFERENCES "vacancies" ("id")
+    FOREIGN KEY ("vacancy_id") REFERENCES "middle_vacancies" ("id")
 );
 
 CREATE TABLE "user_analysis_hard_skills" (

@@ -91,7 +91,12 @@ func StaticRoutes(r *mux.Router, manager *db.Manager) {
 					"vacancy": vacancy,
 				}
 			}
-			allVacancies, err := manager.GetAllVacancies()
+			allVacancies, err := manager.GetAllVacancies(*cookies.GetRole(r))
+			if err != nil {
+				log.Println("Ошибка при получении вакансий:", err)
+				http.Error(w, "Не удалось получить вакансии", http.StatusInternalServerError)
+				return
+			}
 			data := map[string]interface{}{
 				"pageTitle":    "Вакансии",
 				"finders":      findersData,

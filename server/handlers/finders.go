@@ -247,11 +247,10 @@ func AddFinderResume(w http.ResponseWriter, r *http.Request, manager *db.Manager
 
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(topVacs)
-	w.WriteHeader(http.StatusOK)
 }
 
 func GetTopMatchingVacancies(resumeSkills models.ResumeSkills, manager *db.Manager, role string) ([]models.VacancyMatchResult, error) {
-	vacancies, err := manager.GetAllVacancies()
+	vacancies, err := manager.GetAllVacancies(role)
 	if err != nil {
 		log.Printf("Ошибка получения списка вакансий: %v", err)
 		return nil, err
