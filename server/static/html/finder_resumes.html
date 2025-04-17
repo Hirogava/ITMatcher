@@ -81,7 +81,7 @@
           <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
         </div>
         <div class="modal-body">
-          <form action="/api/finder/add_resume" method="post" enctype="multipart/form-data" id="addFinderForm">            
+          <form action="/api/finder/resume" method="post" enctype="multipart/form-data" id="addFinderForm">            
             <label for="resume" class="fw-medium">Файл резюме</label>
             <input type="file" id="resume" name="resume" class="form-control mb-3" placeholder="Файл резюме" required>
 
@@ -103,7 +103,7 @@
         const formData = new FormData(this);
 
                     try {
-                        const response = await fetch('/api/finder/add_resume', {
+                        const response = await fetch('/api/finder/resume', {
                             method: 'POST',
                             body: formData
                         });

@@ -134,20 +134,21 @@ gaspr_case/
 - `POST http://localhost:8001/analyze` - Анализ текста резюме (внутренний API, вызывается Go-сервером)
 
 ### Внешние (публичные) API
-- `POST /api/send_resume` - Отправка резюме для анализа из внешнего сервиса (возможна интеграция)
+- `POST /api/resume` - Отправка резюме для анализа из внешнего сервиса (возможна интеграция)
 
 ### HR API
 - `GET /api/hr/resume/{id}` - Получение данных о конкретном резюме
 - `GET /api/hr/resumes` - Получение списка всех резюме для HR
-- `POST /api/hr/add_vacancy` - Создание новой вакансии
-- `POST /api/hr/add_finder` - Добавление нового соискателя
-- `GET /api/hr/finder/{finder_id}/{vacancy_id}` - Получение данных анализа резюме для конкретной вакансии
+- `POST /api/hr/vacancy` - Создание новой вакансии
+- `POST /api/hr/finder` - Добавление нового соискателя
+- `GET /api/hr/finder/{finder_id}/vacancy/{vacancy_id}` - Получение данных анализа резюме для конкретной вакансии
 - `GET /api/hr/vacancy/{vacancy_id}` - Получение информации о вакансии
 
 ### Соискатель API
 - `GET /api/finder/resumes` - Получение списка загруженных резюме для пользователя
 - `GET /api/finder/resume/{resume_id}` - Получение информации о конкретном резюме
-- `POST /api/finder/add_resume` - Загрузка нового резюме и получение трех наиболее подходящих вакансий
+- `POST /api/finder/resume` - Загрузка нового резюме и получение трех наиболее подходящих вакансий
 
 ## Авторы
 - [Linares](https://gitverse.ru/Linares)
+- [fL1pSt3r](https://github.com/fL1pSt3r)

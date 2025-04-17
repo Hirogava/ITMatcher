@@ -61,7 +61,7 @@ func ApiRoutes(r *mux.Router, manager *db.Manager) {
 	/*
 		Внешние
 	*/
-	r.HandleFunc("/api/send_resume", func(w http.ResponseWriter, r *http.Request) {
+	r.HandleFunc("/api/resume", func(w http.ResponseWriter, r *http.Request) {
 		handlers.SendResume(w, r, manager)
 	}).Methods(http.MethodPost)
 
@@ -73,23 +73,22 @@ func ApiRoutes(r *mux.Router, manager *db.Manager) {
 			handlers.ResumeById(w, r, manager)
 		}))).Methods(http.MethodGet)
 
-	// Прошлый вариант позволял получать одному hr'у получать доступ к чужим резюме
 	r.Handle("/api/hr/resumes", middleware.AuthRequired("hr",
 		http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			handlers.ResumesList(w, r, manager)
 		}))).Methods(http.MethodGet)
 
-	r.Handle("/api/hr/add_vacancy", middleware.AuthRequired("hr",
+	r.Handle("/api/hr/vacancy", middleware.AuthRequired("hr",
 		http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			handlers.AddVacancy(w, r, manager)
 		}))).Methods(http.MethodPost)
 
-	r.Handle("/api/hr/add_finder", middleware.AuthRequired("hr",
+	r.Handle("/api/hr/finder", middleware.AuthRequired("hr",
 		http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			handlers.AddFinder(w, r, manager)
 		}))).Methods(http.MethodPost)
 
-	r.Handle("/api/hr/finder/{finder_id}/{vacancy_id}", middleware.AuthRequired("hr",
+	r.Handle("/api/hr/finder/{finder_id}/vacancy/{vacancy_id}", middleware.AuthRequired("hr",
 		http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			handlers.GetAnalizedResume(w, r, manager)
 		}))).Methods(http.MethodGet)
@@ -113,7 +112,7 @@ func ApiRoutes(r *mux.Router, manager *db.Manager) {
 			handlers.GetFinderResume(w, r, manager)
 		}))).Methods(http.MethodGet)
 
-	r.Handle("/api/finder/add_resume", middleware.AuthRequired("users",
+	r.Handle("/api/finder/resume", middleware.AuthRequired("users",
 		http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			handlers.AddFinderResume(w, r, manager)
 		}))).Methods(http.MethodPost)
