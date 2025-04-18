@@ -150,5 +150,5 @@ gaspr_case/
 - `POST /api/finder/resume` - Загрузка нового резюме и получение трех наиболее подходящих вакансий
 
 ## Авторы
-- [Linares](https://gitverse.ru/Linares)
+- [Linares](https://github.com/Hirogava)
 - [fL1pSt3r](https://github.com/fL1pSt3r)
