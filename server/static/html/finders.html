@@ -124,7 +124,7 @@
     <script>
         async function finder_info(finder_id, vacancy_id, first_name, last_name, surname, vacancy_name) {
             try{
-                const response = await fetch(`/api/hr/finder/${finder_id}/${vacancy_id}`, {
+                const response = await fetch(`/api/hr/finder/${finder_id}/vacancy/${vacancy_id}`, {
                 method: 'GET',
                 headers: {
                     'Content-Type': 'application/json'
